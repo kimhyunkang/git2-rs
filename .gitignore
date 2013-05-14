@@ -1,3 +1,6 @@
 # OS X dynamic libraries
 *.dSYM
 *.dylib
+
+# test binaries
+*_test
