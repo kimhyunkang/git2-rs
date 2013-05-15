@@ -18,6 +18,7 @@ extern "C" {
     fn git_repository_discover(path_out: *mut c_char, path_size: size_t,
                             start_path: *c_char, across_fs: c_int,
                             ceiling_dirs: *c_char) -> c_int;
+    fn git_repository_path(repo: *git_repository) -> *c_char;
 }
 
 pub struct Repository {
@@ -57,6 +58,15 @@ pub fn discover(start_path: &Path, across_fs: bool, ceiling_dirs: &Path)
                     }
                 }
             }
+        }
+    }
+}
+
+pub impl Repository {
+    fn path(&self) -> Path {
+        unsafe {
+            let c_path = git_repository_path(self.repo);
+            Path(str::raw::from_c_str(c_path))
         }
     }
 }
