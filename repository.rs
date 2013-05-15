@@ -6,6 +6,13 @@ use error::*;
 
 static PATH_BUF_SZ: uint = 1024u;
 
+/// Open a git repository.
+///
+/// The 'path' argument must point to either a git repository
+/// folder, or an existing work dir.
+///
+/// The method will automatically detect if 'path' is a normal
+/// or bare repository or fail is 'path' is neither.
 pub fn open(path: &str) -> Result<@Repository, GitError>
 {
     unsafe {
@@ -21,6 +28,11 @@ pub fn open(path: &str) -> Result<@Repository, GitError>
     }
 }
 
+/// Creates a new Git repository in the given folder.
+/// if is_bare is true, a Git repository without a working directory is
+/// created at the pointed path. If false, provided path will be
+/// considered as the working directory into which the .git directory
+/// will be created.
 pub fn init(path: &str, is_bare: bool) -> Result<@Repository, GitError>
 {
     unsafe {
@@ -36,6 +48,20 @@ pub fn init(path: &str, is_bare: bool) -> Result<@Repository, GitError>
     }
 }
 
+/// Look for a git repository and copy its path in the given buffer.
+/// The lookup start from base_path and walk across parent directories
+/// if nothing has been found. The lookup ends when the first repository
+/// is found, or when reaching a directory referenced in ceiling_dirs
+/// or when the filesystem changes (in case across_fs is true).
+///
+/// The method will automatically detect if the repository is bare
+/// (if there is a repository).
+///
+/// ceiling_dirs: A GIT_PATH_LIST_SEPARATOR separated list of
+/// absolute symbolic link free paths. The lookup will stop when any
+/// of this paths is reached. Note that the lookup always performs on
+/// start_path no matter start_path appears in ceiling_dirs ceiling_dirs
+/// might be NULL (which is equivalent to an empty string)
 pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str) 
     -> Result<~str, GitError>
 {
@@ -59,6 +85,10 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str)
 }
 
 pub impl Repository {
+    /// Get the path of this repository
+    ///
+    /// This is the path of the `.git` folder for normal repositories,
+    /// or of the repository itself for bare repositories.
     fn path(&self) -> ~str {
         unsafe {
             let c_path = ext::git_repository_path(self.repo);
@@ -66,6 +96,7 @@ pub impl Repository {
         }
     }
 
+    /// Retrieve and resolve the reference pointed at by HEAD.
     fn head(@self) -> Result<~Reference, GitError> {
         unsafe {
             let ptr_to_ref: *ext::git_reference = ptr::null();
