@@ -96,6 +96,20 @@ pub impl Repository {
         }
     }
 
+    /// Get the path of the working directory for this repository
+    ///
+    /// If the repository is bare, this function will always return None.
+    fn workdir(&self) -> Option<~str> {
+        unsafe {
+            let c_path = ext::git_repository_workdir(self.repo);
+            if ptr::is_null(c_path) {
+                None
+            } else {
+                Some(str::raw::from_c_str(c_path))
+            }
+        }
+    }
+
     /// Retrieve and resolve the reference pointed at by HEAD.
     fn head(@self) -> Result<~Reference, GitError> {
         unsafe {
@@ -106,6 +120,18 @@ pub impl Repository {
                 Ok( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
             } else {
                 Err( err_last() )
+            }
+        }
+    }
+
+    /// Check if a repository is empty
+    fn is_empty(&self) -> bool {
+        unsafe {
+            let res = ext::git_repository_is_empty(self.repo);
+            if res < 0 {
+                fail!(~"repository is corrupted")
+            } else {
+                res as bool
             }
         }
     }
