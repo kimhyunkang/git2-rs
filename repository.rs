@@ -1,4 +1,4 @@
-use core::libc::{c_char, c_void, c_int, size_t};
+use core::libc::{c_char, c_void, c_int, c_uint, size_t};
 
 use error::*;
 
@@ -18,6 +18,7 @@ extern "C" {
                             start_path: *c_char, across_fs: c_int,
                             ceiling_dirs: *c_char) -> c_int;
     fn git_repository_path(repo: *git_repository) -> *c_char;
+    fn git_repository_init(out: **git_repository, path: *c_char, is_bare: c_uint) -> c_int;
 }
 
 pub struct Repository {
@@ -31,6 +32,21 @@ pub fn open(path: &str) -> Result<@Repository, GitError>
         let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path) |c_path| {
             if(git_repository_open(ptr2, c_path) == 0) {
+                Ok( @Repository { repo: ptr_to_repo } )
+            } else {
+                Err( err_last() )
+            }
+        }
+    }
+}
+
+pub fn init(path: &str, is_bare: bool) -> Result<@Repository, GitError>
+{
+    unsafe {
+        let ptr_to_repo: *git_repository = ptr::null();
+        let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
+        do str::as_c_str(path) |c_path| {
+            if(git_repository_init(ptr2, c_path, is_bare as c_uint) == 0) {
                 Ok( @Repository { repo: ptr_to_repo } )
             } else {
                 Err( err_last() )
