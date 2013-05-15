@@ -55,6 +55,7 @@ pub enum git_return_code {
 /* from <git2/types.h> */
 // the storage size of these types are unknown
 pub type git_repository = c_void;
+pub type git_reference = c_void;
 
 #[link_args = "-lgit2"]
 pub extern {
@@ -69,4 +70,8 @@ pub extern {
                             ceiling_dirs: *c_char) -> c_int;
     pub fn git_repository_path(repo: *git_repository) -> *c_char;
     pub fn git_repository_init(out: **git_repository, path: *c_char, is_bare: c_uint) -> c_int;
+    pub fn git_repository_head(out: **git_reference, repo: *git_repository) -> c_int;
+
+    /* from <git2/refs.h> */
+    pub fn git_reference_free(c_ref: *git_reference) -> c_void;
 }

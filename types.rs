@@ -8,3 +8,8 @@ pub struct GitError {
 pub struct Repository {
     pub repo: *ext::git_repository,
 }
+
+pub struct Reference {
+    pub c_ref: *ext::git_reference,
+    pub repo_ptr: @Repository,
+}

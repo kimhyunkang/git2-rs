@@ -1,6 +1,6 @@
 use core::libc::{c_char, c_int, c_uint, size_t};
 use ext;
-use types::{Repository, GitError};
+use types::{GitError, Repository, Reference};
 
 use error::*;
 
@@ -63,6 +63,19 @@ pub impl Repository {
         unsafe {
             let c_path = ext::git_repository_path(self.repo);
             str::raw::from_c_str(c_path)
+        }
+    }
+
+    fn head(@self) -> Result<~Reference, GitError> {
+        unsafe {
+            let ptr_to_ref: *ext::git_reference = ptr::null();
+            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+
+            if(ext::git_repository_head(pptr, self.repo) == 0) {
+                Ok( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
+            } else {
+                Err( err_last() )
+            }
         }
     }
 }
