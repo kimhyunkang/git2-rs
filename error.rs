@@ -1,13 +1,21 @@
 use ext;
 use types::GitError;
+use core::task::atomically;
 
-pub fn err_last() -> GitError {
+pub fn atomic_err<T>(f: &fn() -> Option<T>) -> Result<T, GitError>
+{
     unsafe {
-        let err = ext::giterr_last();
-        GitError {
-            message: str::raw::from_c_str((*err).message),
-            klass: (*err).klass,
+        do atomically {
+            match f() {
+                None => {
+                    let err = ext::giterr_last();
+                    Err(GitError {
+                            message: str::raw::from_c_str((*err).message),
+                            klass: (*err).klass,
+                        })
+                },
+                Some(T) => Ok(T)
+            }
         }
     }
 }
-

@@ -19,10 +19,12 @@ pub fn open(path: &str) -> Result<@Repository, GitError>
         let ptr_to_repo: *ext::git_repository = ptr::null();
         let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path) |c_path| {
-            if(ext::git_repository_open(ptr2, c_path) == 0) {
-                Ok( @Repository { repo: ptr_to_repo } )
-            } else {
-                Err( err_last() )
+            do atomic_err {
+                if(ext::git_repository_open(ptr2, c_path) == 0) {
+                    Some( @Repository { repo: ptr_to_repo } )
+                } else {
+                    None
+                }
             }
         }
     }
@@ -39,10 +41,12 @@ pub fn init(path: &str, is_bare: bool) -> Result<@Repository, GitError>
         let ptr_to_repo: *ext::git_repository = ptr::null();
         let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path) |c_path| {
-            if(ext::git_repository_init(ptr2, c_path, is_bare as c_uint) == 0) {
-                Ok( @Repository { repo: ptr_to_repo } )
-            } else {
-                Err( err_last() )
+            do atomic_err {
+                if(ext::git_repository_init(ptr2, c_path, is_bare as c_uint) == 0) {
+                    Some( @Repository { repo: ptr_to_repo } )
+                } else {
+                    None
+                }
             }
         }
     }
@@ -70,13 +74,15 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str)
         do vec::as_mut_buf(buf) |c_path, sz| {
             do str::as_c_str(start_path) |c_start_path| {
                 do str::as_c_str(ceiling_dirs) |c_ceiling_dirs| {
-                    let result = ext::git_repository_discover(c_path, sz as size_t,
-                                            c_start_path, across_fs as c_int, c_ceiling_dirs);
-                    if result == 0 {
-                        let path_str = str::raw::from_buf(c_path as *u8);
-                        Ok(path_str)
-                    } else {
-                        Err(err_last())
+                    do atomic_err {
+                        let result = ext::git_repository_discover(c_path, sz as size_t,
+                                                c_start_path, across_fs as c_int, c_ceiling_dirs);
+                        if result == 0 {
+                            let path_str = str::raw::from_buf(c_path as *u8);
+                            Some(path_str)
+                        } else {
+                            None
+                        }
                     }
                 }
             }
@@ -92,10 +98,12 @@ pub fn clone(url: &str, local_path: &str) -> Result<@Repository, GitError> {
         let pptr = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(url) |c_url| {
             do str::as_c_str(local_path) |c_path| {
-                if ext::git_clone(pptr, c_url, c_path, ptr::null()) == 0 {
-                    Ok( @Repository { repo: ptr_to_repo } )
-                } else {
-                    Err( err_last() )
+                do atomic_err {
+                    if ext::git_clone(pptr, c_url, c_path, ptr::null()) == 0 {
+                        Some( @Repository { repo: ptr_to_repo } )
+                    } else {
+                        None
+                    }
                 }
             }
         }
@@ -134,10 +142,12 @@ pub impl Repository {
             let ptr_to_ref: *ext::git_reference = ptr::null();
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
 
-            if(ext::git_repository_head(pptr, self.repo) == 0) {
-                Ok( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
-            } else {
-                Err( err_last() )
+            do atomic_err {
+                if(ext::git_repository_head(pptr, self.repo) == 0) {
+                    Some( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
+                } else {
+                    None
+                }
             }
         }
     }
