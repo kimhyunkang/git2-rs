@@ -14,3 +14,19 @@ pub mod repository;
 
 pub type Repository = types::Repository;
 pub type GitError = types::GitError;
+
+// if you call this library in multiple tasks,
+// this function must be called before calling any other functions in library
+pub fn threads_init() {
+    unsafe {
+        ext::git_threads_init();
+    }
+}
+
+// if you call this library in multiple tasks,
+// this function must be called before shutting down the library
+pub fn threads_shutdown() {
+    unsafe {
+        ext::git_threads_shutdown();
+    }
+}

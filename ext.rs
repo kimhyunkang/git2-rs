@@ -74,4 +74,8 @@ pub extern {
 
     /* from <git2/refs.h> */
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
+
+    /* from <git2/threads.h> */
+    pub fn git_threads_init() -> c_void;
+    pub fn git_threads_shutdown() -> c_void;
 }
