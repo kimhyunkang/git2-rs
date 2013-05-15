@@ -19,11 +19,12 @@ pub struct Repository {
     priv repo: *git_repository,
 }
 
-pub fn open(path: &Path) -> Result<@Repository, GitError> {
+pub fn open(path: &Path) -> Result<@Repository, GitError>
+{
     unsafe {
+        let ptr_to_repo: *git_repository = ptr::null();
+        let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path.to_str()) |c_path| {
-            let ptr_to_repo: *git_repository = ptr::null();
-            let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
             if(git_repository_open(ptr2, c_path) == 0) {
                 Ok( @Repository { repo: ptr_to_repo } )
             } else {
