@@ -1,4 +1,4 @@
-lib: git2.rs repository.rs
+lib: git2.rs repository.rs error.rs ext.rs
 	rustc --lib git2.rs -O
 
 test: git2_test
