@@ -15,6 +15,7 @@ pub mod repository;
 pub type Repository = types::Repository;
 pub type GitError = types::GitError;
 
+// FIXME: there should be better ways to do this...
 // if you call this library in multiple tasks,
 // this function must be called before calling any other functions in library
 pub fn threads_init() {
