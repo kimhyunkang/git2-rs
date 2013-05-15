@@ -135,6 +135,13 @@ pub impl Repository {
             }
         }
     }
+
+    /// Check if a repository is bare
+    fn is_bare(&self) -> bool {
+        unsafe {
+            ext::git_repository_is_bare(self.repo) as bool
+        }
+    }
 }
 
 impl Drop for Repository {

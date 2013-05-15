@@ -73,6 +73,7 @@ pub extern {
     pub fn git_repository_init(out: **git_repository, path: *c_char, is_bare: c_uint) -> c_int;
     pub fn git_repository_head(out: **git_reference, repo: *git_repository) -> c_int;
     pub fn git_repository_is_empty(repo: *git_repository) -> c_int;
+    pub fn git_repository_is_bare(repo: *git_repository) -> c_int;
 
     /* from <git2/refs.h> */
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
