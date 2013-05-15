@@ -1,13 +1,10 @@
 use core::libc::{c_char, c_int, c_uint, size_t};
 use ext;
+use types::{Repository, GitError};
 
 use error::*;
 
 static PATH_BUF_SZ: uint = 1024u;
-
-pub struct Repository {
-    priv repo: *ext::git_repository,
-}
 
 pub fn open(path: &str) -> Result<@Repository, GitError>
 {

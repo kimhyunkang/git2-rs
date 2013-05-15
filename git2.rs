@@ -9,4 +9,8 @@
 
 pub mod error;
 pub mod ext;
+pub mod types;
 pub mod repository;
+
+pub type Repository = types::Repository;
+pub type GitError = types::GitError;

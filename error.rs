@@ -1,9 +1,5 @@
 use ext;
-
-pub struct GitError {
-    pub message: ~str,
-    pub klass: ext::git_error_t,
-}
+use types::GitError;
 
 pub fn err_last() -> GitError {
     unsafe {
