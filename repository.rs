@@ -84,6 +84,24 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str)
     }
 }
 
+/// Clone a remote repository, and checkout the branch pointed to by the remote
+/// this function do not receive options for now
+pub fn clone(url: &str, local_path: &str) -> Result<@Repository, GitError> {
+    unsafe {
+        let ptr_to_repo: *ext::git_repository = ptr::null();
+        let pptr = ptr::to_unsafe_ptr(&ptr_to_repo);
+        do str::as_c_str(url) |c_url| {
+            do str::as_c_str(local_path) |c_path| {
+                if ext::git_clone(pptr, c_url, c_path, ptr::null()) == 0 {
+                    Ok( @Repository { repo: ptr_to_repo } )
+                } else {
+                    Err( err_last() )
+                }
+            }
+        }
+    }
+}
+
 pub impl Repository {
     /// Get the path of this repository
     ///

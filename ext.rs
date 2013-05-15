@@ -52,10 +52,87 @@ pub enum git_return_code {
     GIT_ITEROVER = -31,
 }
 
+/* from <git2/remote.h> */
+pub enum git_remote_autotag_option_t {
+    GIT_REMOTE_DOWNLOAD_TAGS_UNSET,
+    GIT_REMOTE_DOWNLOAD_TAGS_NONE,
+    GIT_REMOTE_DOWNLOAD_TAGS_AUTO,
+    GIT_REMOTE_DOWNLOAD_TAGS_ALL
+}
+
+/* from <git2/transport.h> */
+pub struct git_transport {
+    set_callbacks: callback_t,
+    connect: callback_t,
+    ls: callback_t,
+    push: callback_t,
+    negotiate_fetch: callback_t,
+    download_pack: callback_t,
+    is_connected: callback_t,
+    read_flags: callback_t,
+    cancel: callback_t,
+    close: callback_t,
+    free: callback_t,
+}
+
+/* from <git2/strarray.h> */
+pub struct git_strarray {
+    strings: **c_char,
+    count: size_t,
+}
+
+/* from <git2/checkout.h> */
+pub struct git_checkout_opts {
+    version: c_uint,
+
+    checkout_strategy: c_uint,
+
+    disable_filters: c_int,
+    dir_mode: c_uint,
+    file_mode: c_uint,
+    file_open_flags: c_int,
+
+    notify_flags: c_uint,
+    notify_cb: callback_t,
+    notify_payload: *c_void,
+
+    progress_cb: callback_t,
+    progress_payload: *c_void,
+
+    paths: git_strarray,
+
+    baseline: *git_tree,
+}
+
+/* from <git2/clone.h> */
+pub struct git_clone_options {
+    version: c_uint,
+
+    checkout_opts: git_checkout_opts,
+    bare: c_int,
+    fetch_progress_cb: callback_t,
+    fetch_progress_payload: *c_void,
+
+    remote_name: *c_char,
+    pushurl: *c_char,
+    fetch_spec: *c_char,
+    push_spec: *c_char,
+    cred_acquire_cb: callback_t,
+    cred_acquire_payload: *c_void,
+    transport: *git_transport,
+    remote_callbacks: callback_t,
+    remote_autotag: git_remote_autotag_option_t,
+    checkout_branch: *c_char,
+}
+
 /* from <git2/types.h> */
 // the storage size of these types are unknown
 pub type git_repository = c_void;
 pub type git_reference = c_void;
+pub type git_tree = c_void;
+
+// value type of 'crust' functions is *u8
+pub type callback_t = *u8;
 
 #[link_args = "-lgit2"]
 pub extern {
@@ -81,4 +158,8 @@ pub extern {
     /* from <git2/threads.h> */
     pub fn git_threads_init() -> c_void;
     pub fn git_threads_shutdown() -> c_void;
+
+    /* from <git2/clone.h> */
+    pub fn git_clone(out: **git_repository, url: *c_char, local_path: *c_char,
+                    options: *git_clone_options) -> c_int;
 }
