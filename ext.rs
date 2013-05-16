@@ -194,6 +194,7 @@ pub struct git_clone_options {
 pub type git_repository = c_void;
 pub type git_reference = c_void;
 pub type git_tree = c_void;
+pub type git_index = c_void;
 
 // value type of 'crust' functions is *u8
 pub type callback_t = *u8;
@@ -215,6 +216,7 @@ pub extern {
     pub fn git_repository_head(out: **git_reference, repo: *git_repository) -> c_int;
     pub fn git_repository_is_empty(repo: *git_repository) -> c_int;
     pub fn git_repository_is_bare(repo: *git_repository) -> c_int;
+    pub fn git_repository_index(out: **git_index, repo: *git_repository) -> c_int;
 
     /* from <git2/refs.h> */
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
@@ -231,4 +233,7 @@ pub extern {
 
     /* from <git2/checkout.h> */
     pub fn git_checkout_head(repo: *git_repository, opts: *git_checkout_opts) -> c_int;
+
+    /* from <git2/index.h> */
+    pub fn git_index_free(index: *git_index) -> c_void;
 }

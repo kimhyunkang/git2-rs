@@ -1,6 +1,6 @@
 use core::libc::{c_char, c_int, c_uint, size_t};
 use ext;
-use types::{GitError, Repository, Reference};
+use types::{GitError, Repository, Reference, GitIndex};
 
 use error::*;
 
@@ -186,6 +186,26 @@ pub impl Repository {
                             message: str::raw::from_c_str((*err).message),
                             klass: (*err).klass,
                         })
+                }
+            }
+        }
+    }
+
+    /// Get the Index file for this repository.
+    ///
+    /// If a custom index has not been set, the default
+    /// index for the repository will be returned (the one
+    /// located in `.git/index`).
+    fn index(@self) -> Result<~GitIndex, GitError> {
+        unsafe {
+            let ptr_to_ref: *ext::git_index = ptr::null();
+            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+
+            do atomic_err {
+                if ext::git_repository_index(pptr, self.repo) == 0 {
+                    Some( ~GitIndex { index: ptr_to_ref, repo_ptr: Some(self) } )
+                } else {
+                    None
                 }
             }
         }

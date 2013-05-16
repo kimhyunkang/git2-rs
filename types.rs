@@ -13,3 +13,8 @@ pub struct Reference {
     pub c_ref: *ext::git_reference,
     pub repo_ptr: @Repository,
 }
+
+pub struct GitIndex {
+    pub index: *ext::git_index,
+    pub repo_ptr: Option<@Repository>,
+}

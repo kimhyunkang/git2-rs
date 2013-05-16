@@ -13,6 +13,8 @@ pub mod types;
 pub mod repository;
 
 pub type Repository = types::Repository;
+pub type Reference = types::Reference;
+pub type GitIndex = types::GitIndex;
 pub type GitError = types::GitError;
 
 // FIXME: there should be better ways to do this...
