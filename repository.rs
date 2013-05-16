@@ -1,4 +1,4 @@
-use core::libc::{c_char, c_int, c_uint, size_t};
+use core::libc::{c_char, c_int, c_uint, c_void, size_t};
 use ext;
 use types::{GitError, Repository, Reference, GitIndex};
 
@@ -227,6 +227,49 @@ pub impl Repository {
     fn is_bare(&self) -> bool {
         unsafe {
             ext::git_repository_is_bare(self.repo) as bool
+        }
+    }
+
+    /// Gather file statuses and run a callback for each one.
+    /// The callback is passed the path of the file and the status (GitStatus)
+    /// If the callback returns false, this function will stop looping
+    /// 
+    /// return values:
+    ///   Ok(true): the loop finished successfully
+    ///   Ok(false): the callback returned false
+    ///   Err(e): found libgit2 errors
+    ///
+    /// This method is unsafe, as it blocks other tasks while running
+    unsafe fn each_status(&self,
+                            op: &fn(path: ~str, status_flags: uint) -> bool)
+                            -> Result<bool, GitError>
+    {
+        unsafe {
+            let fptr: *c_void = cast::transmute(&op);
+            do atomic_err {
+                let res = ext::git_status_foreach(self.repo, git_status_cb, fptr);
+                if res == 0 {
+                    Some(true)
+                } else if res == ext::GIT_EUSER {
+                    Some(false)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -> c_int
+{
+    unsafe {
+        let op_ptr: *&fn(~str, uint) -> bool = cast::transmute(payload);
+        let op = *op_ptr;
+        let path_str = str::raw::from_c_str(path);
+        if op(path_str, status_flags as uint) {
+            0
+        } else {
+            1
         }
     }
 }

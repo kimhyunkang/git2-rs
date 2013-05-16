@@ -33,24 +33,22 @@ pub struct git_error {
 }
 
 /* from <git2/errors.h> */
-pub enum git_return_code {
-    GIT_OK = 0,
-    GIT_ERROR = -1,
-    GIT_ENOTFOUND = -3,
-    GIT_EEXISTS = -4,
-    GIT_EAMBIGUOUS = -5,
-    GIT_EBUFS = -6,
-    GIT_EUSER = -7,
-    GIT_EBAREREPO = -8,
-    GIT_EORPHANEDHEAD = -9,
-    GIT_EUNMERGED = -10,
-    GIT_ENONFASTFORWARD = -11,
-    GIT_EINVALIDSPEC = -12,
-    GIT_EMERGECONFLICT = -13,
+pub static GIT_OK:c_int = 0;
+pub static GIT_ERROR:c_int = -1;
+pub static GIT_ENOTFOUND:c_int = -3;
+pub static GIT_EEXISTS:c_int = -4;
+pub static GIT_EAMBIGUOUS:c_int = -5;
+pub static GIT_EBUFS:c_int = -6;
+pub static GIT_EUSER:c_int = -7;
+pub static GIT_EBAREREPO:c_int = -8;
+pub static GIT_EORPHANEDHEAD:c_int = -9;
+pub static GIT_EUNMERGED:c_int = -10;
+pub static GIT_ENONFASTFORWARD:c_int = -11;
+pub static GIT_EINVALIDSPEC:c_int = -12;
+pub static GIT_EMERGECONFLICT:c_int = -13;
 
-    GIT_PASSTHROUGH = -30,
-    GIT_ITEROVER = -31,
-}
+pub static GIT_PASSTHROUGH:c_int = -30;
+pub static GIT_ITEROVER:c_int = -31;
 
 /* from <git2/remote.h> */
 pub enum git_remote_autotag_option_t {
@@ -189,6 +187,20 @@ pub struct git_clone_options {
     checkout_branch: *c_char,
 }
 
+/* from <git2/status.h> */
+pub static GIT_STATUS_INDEX_NEW:c_uint        = (1u << 0) as c_uint;
+pub static GIT_STATUS_INDEX_MODIFIED:c_uint   = (1u << 1) as c_uint;
+pub static GIT_STATUS_INDEX_DELETED:c_uint    = (1u << 2) as c_uint;
+pub static GIT_STATUS_INDEX_RENAMED:c_uint    = (1u << 3) as c_uint;
+pub static GIT_STATUS_INDEX_TYPECHANGE:c_uint = (1u << 4) as c_uint;
+
+pub static GIT_STATUS_WT_NEW:c_uint           = (1u << 7) as c_uint;
+pub static GIT_STATUS_WT_MODIFIED:c_uint      = (1u << 8) as c_uint;
+pub static GIT_STATUS_WT_DELETED:c_uint       = (1u << 9) as c_uint;
+pub static GIT_STATUS_WT_TYPECHANGE:c_uint    = (1u << 10) as c_uint;
+
+pub static GIT_STATUS_IGNORED:c_uint          = (1u << 14) as c_uint;
+
 /* from <git2/types.h> */
 // the storage size of these types are unknown
 pub type git_repository = c_void;
@@ -236,4 +248,8 @@ pub extern {
 
     /* from <git2/index.h> */
     pub fn git_index_free(index: *git_index) -> c_void;
+
+    /* from <git2/status.h> */
+    pub fn git_status_foreach(repo: *git_repository, callback: callback_t,
+                                payload: *c_void) -> c_int;
 }
