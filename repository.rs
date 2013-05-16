@@ -152,6 +152,25 @@ pub impl Repository {
         }
     }
 
+    /// Lookup a reference by name in a repository.
+    /// The name will be checked for validity.
+    fn lookup(@self, name: &str) -> Result<~Reference, GitError> {
+        unsafe {
+            let ptr_to_ref: *ext::git_reference = ptr::null();
+            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+
+            do str::as_c_str(name) |c_name| {
+                do atomic_err {
+                    if(ext::git_reference_lookup(pptr, self.repo, c_name) == 0) {
+                        Some( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
+    }
+
     /// Check if a repository is empty
     fn is_empty(&self) -> bool {
         unsafe {

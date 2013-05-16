@@ -154,6 +154,8 @@ pub extern {
 
     /* from <git2/refs.h> */
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
+    pub fn git_reference_lookup(out: **git_reference, repo: *git_repository,
+                                name: *c_char) -> c_int;
 
     /* from <git2/threads.h> */
     pub fn git_threads_init() -> c_void;
