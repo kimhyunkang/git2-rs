@@ -171,6 +171,26 @@ pub impl Repository {
         }
     }
 
+    /// Updates files in the index and the working tree to match the content of
+    /// the commit pointed at by HEAD.
+    /// This function does not accept options for now
+    /// Returns None on success, Some(GitError) on error
+    fn checkout_head(&mut self) -> Option<GitError> {
+        unsafe {
+            do task::atomically {
+                if ext::git_checkout_head(self.repo, ptr::null()) == 0 {
+                    None
+                } else {
+                    let err = ext::giterr_last();
+                    Some(GitError {
+                            message: str::raw::from_c_str((*err).message),
+                            klass: (*err).klass,
+                        })
+                }
+            }
+        }
+    }
+
     /// Check if a repository is empty
     fn is_empty(&self) -> bool {
         unsafe {

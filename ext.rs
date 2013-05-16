@@ -82,17 +82,81 @@ pub struct git_strarray {
 }
 
 /* from <git2/checkout.h> */
+type git_checkout_strategy_t = uint;
+
+/** default is a dry run, no actual updates */
+static GIT_CHECKOUT_NONE:git_checkout_strategy_t = 0;
+
+/** Allow safe updates that cannot overwrite uncommitted data */
+static GIT_CHECKOUT_SAFE:git_checkout_strategy_t = (1u << 0);
+
+/** Allow safe updates plus creation of missing files */
+static GIT_CHECKOUT_SAFE_CREATE:git_checkout_strategy_t = (1u << 1);
+
+/** Allow all updates to force working directory to look like index */
+static GIT_CHECKOUT_FORCE:git_checkout_strategy_t = (1u << 2);
+
+/** Allow checkout to make safe updates even if conflicts are found */
+static GIT_CHECKOUT_ALLOW_CONFLICTS:git_checkout_strategy_t = (1u << 4);
+
+/** Remove untracked files not in index (that are not ignored) */
+static GIT_CHECKOUT_REMOVE_UNTRACKED:git_checkout_strategy_t = (1u << 5);
+
+/** Remove ignored files not in index */
+static GIT_CHECKOUT_REMOVE_IGNORED:git_checkout_strategy_t = (1u << 6);
+
+/** Only update existing files, don't create new ones */
+static GIT_CHECKOUT_UPDATE_ONLY:git_checkout_strategy_t = (1u << 7);
+
+/** Normally checkout updates index entries as it goes; this stops that */
+static GIT_CHECKOUT_DONT_UPDATE_INDEX:git_checkout_strategy_t = (1u << 8);
+
+/** Don't refresh index/config/etc before doing checkout */
+static GIT_CHECKOUT_NO_REFRESH:git_checkout_strategy_t = (1u << 9);
+
+/** Treat pathspec as simple list of exact match file paths */
+static GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH:git_checkout_strategy_t = (1u << 13);
+
+/** Ignore directories in use, they will be left empty */
+static GIT_CHECKOUT_SKIP_LOCKED_DIRECTORIES:git_checkout_strategy_t = (1u << 18);
+
+/**
+ * THE FOLLOWING OPTIONS ARE NOT YET IMPLEMENTED
+ */
+
+/** Allow checkout to skip unmerged files (NOT IMPLEMENTED) */
+static GIT_CHECKOUT_SKIP_UNMERGED:git_checkout_strategy_t = (1u << 10);
+/** For unmerged files, checkout stage 2 from index (NOT IMPLEMENTED) */
+static GIT_CHECKOUT_USE_OURS:git_checkout_strategy_t = (1u << 11);
+/** For unmerged files, checkout stage 3 from index (NOT IMPLEMENTED) */
+static GIT_CHECKOUT_USE_THEIRS:git_checkout_strategy_t = (1u << 12);
+
+/** Recursively checkout submodules with same options (NOT IMPLEMENTED) */
+static GIT_CHECKOUT_UPDATE_SUBMODULES:git_checkout_strategy_t = (1u << 16);
+/** Recursively checkout submodules if HEAD moved in super repo (NOT IMPLEMENTED) */
+static GIT_CHECKOUT_UPDATE_SUBMODULES_IF_CHANGED:git_checkout_strategy_t = (1u << 17);
+
+type git_checkout_notify_t = uint;
+
+static GIT_CHECKOUT_NOTIFY_NONE:git_checkout_notify_t       = 0;
+static GIT_CHECKOUT_NOTIFY_CONFLICT:git_checkout_notify_t   = (1u << 0);
+static GIT_CHECKOUT_NOTIFY_DIRTY:git_checkout_notify_t      = (1u << 1);
+static GIT_CHECKOUT_NOTIFY_UPDATED:git_checkout_notify_t    = (1u << 2);
+static GIT_CHECKOUT_NOTIFY_UNTRACKED:git_checkout_notify_t  = (1u << 3);
+static GIT_CHECKOUT_NOTIFY_IGNORED:git_checkout_notify_t    = (1u << 4);
+
+/* from <git2/checkout.h> */
 pub struct git_checkout_opts {
     version: c_uint,
 
-    checkout_strategy: c_uint,
+    checkout_strategy: git_checkout_strategy_t,
 
     disable_filters: c_int,
     dir_mode: c_uint,
     file_mode: c_uint,
     file_open_flags: c_int,
 
-    notify_flags: c_uint,
+    notify_flags: git_checkout_notify_t,
     notify_cb: callback_t,
     notify_payload: *c_void,
 
@@ -164,4 +228,7 @@ pub extern {
     /* from <git2/clone.h> */
     pub fn git_clone(out: **git_repository, url: *c_char, local_path: *c_char,
                     options: *git_clone_options) -> c_int;
+
+    /* from <git2/checkout.h> */
+    pub fn git_checkout_head(repo: *git_repository, opts: *git_checkout_opts) -> c_int;
 }
