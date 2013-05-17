@@ -19,6 +19,8 @@ fn main() {
     let cmd = copy args[1];
     let cmd_args = vec::slice(args, 2, args.len());
 
+    git2::threads_init();
+
     if cmd == ~"init" {
         cmd_init(cmd_args);
     } else if cmd == ~"clone" {
