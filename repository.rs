@@ -1,6 +1,6 @@
 use core::libc::{c_char, c_int, c_uint, c_void, size_t};
 use ext;
-use types::{GitError, Repository, Reference, GitIndex};
+use types::*;
 
 use error::*;
 
@@ -241,7 +241,7 @@ pub impl Repository {
     ///
     /// This method is unsafe, as it blocks other tasks while running
     unsafe fn each_status(&self,
-                            op: &fn(path: ~str, status_flags: uint) -> bool)
+                            op: &fn(path: ~str, status_flags: c_uint) -> bool)
                             -> Result<bool, GitError>
     {
         unsafe {
@@ -258,15 +258,43 @@ pub impl Repository {
             }
         }
     }
+
+    /// Safer variant of each_status
+    fn status(&self) -> Result<~[(~str, ~GitStatus)], GitError> {
+        let mut status_list:~[(~str, ~GitStatus)] = ~[];
+        unsafe {
+            let res =
+            for self.each_status |path, status_flags| {
+                let status = ~GitStatus {
+                    index_new: status_flags & ext::GIT_STATUS_INDEX_NEW != 0,
+                    index_modified: status_flags & ext::GIT_STATUS_INDEX_MODIFIED != 0,
+                    index_deleted: status_flags & ext::GIT_STATUS_INDEX_DELETED != 0,
+                    index_renamed: status_flags & ext::GIT_STATUS_INDEX_RENAMED != 0,
+                    index_typechange: status_flags & ext::GIT_STATUS_INDEX_TYPECHANGE != 0,
+                    wt_new: status_flags & ext::GIT_STATUS_WT_NEW != 0,
+                    wt_modified: status_flags & ext::GIT_STATUS_WT_MODIFIED != 0,
+                    wt_deleted: status_flags & ext::GIT_STATUS_WT_DELETED != 0,
+                    wt_typechange: status_flags & ext::GIT_STATUS_WT_TYPECHANGE != 0,
+                    ignored: status_flags & ext::GIT_STATUS_IGNORED != 0,
+                };
+                status_list.push((path, status));
+            };
+
+            match res {
+                Ok(_) => Ok(status_list),
+                Err(e) => Err(e),
+            }
+        }
+    }
 }
 
 extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -> c_int
 {
     unsafe {
-        let op_ptr: *&fn(~str, uint) -> bool = cast::transmute(payload);
+        let op_ptr: *&fn(~str, c_uint) -> bool = cast::transmute(payload);
         let op = *op_ptr;
         let path_str = str::raw::from_c_str(path);
-        if op(path_str, status_flags as uint) {
+        if op(path_str, status_flags) {
             0
         } else {
             1
