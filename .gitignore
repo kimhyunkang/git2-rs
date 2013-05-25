@@ -2,6 +2,10 @@
 *.dSYM
 *.dylib
 
+# linux libraries
+*.so
+*.o
+
 # test binaries
 *_test
 

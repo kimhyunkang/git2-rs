@@ -11,4 +11,4 @@ git2_test: git2_test.rs lib
 	rustc --test $< -L .
 
 clean:
-	rm -rf git2_test *.dylib *.dSYM
+	rm -rf git2_test *.dylib *.dSYM *.so *.o
