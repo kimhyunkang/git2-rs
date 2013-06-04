@@ -82,11 +82,12 @@ fn cmd_status(_: &str, _: &[~str]) {
     let mut not_staged: ~[(~str, ~git2::Status)] = ~[];
     let mut staged: ~[(~str, ~git2::Status)] = ~[];
 
-    let status = repo.status();
     match repo.head().branch_name() {
         Some(branch) => println(fmt!("On branch %s", branch)),
         None => println("Not currently on any branch"),
     }
+
+    let status = repo.status();
 
     for status.each() |&tup| {
         let (path, stat) = tup;
@@ -98,6 +99,11 @@ fn cmd_status(_: &str, _: &[~str]) {
         if stat.wt_new || stat.wt_modified || stat.wt_deleted || stat.wt_typechange {
             not_staged.push((copy path, copy stat))
         }
+    }
+
+    if staged.is_empty() && not_staged.is_empty() {
+        println("nothing to commit (working directory clean)");
+        return;
     }
 
     if !staged.is_empty() {
