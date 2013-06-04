@@ -17,7 +17,7 @@ pub mod index;
 pub type Repository = types::Repository;
 pub type Reference = types::Reference;
 pub type GitIndex = types::GitIndex;
-pub type GitStatus = types::GitStatus;
+pub type Status = types::Status;
 
 // FIXME: there should be better ways to do this...
 // if you call this library in multiple tasks,

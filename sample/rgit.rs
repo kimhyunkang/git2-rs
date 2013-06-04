@@ -79,8 +79,8 @@ fn cmd_clone(program: &str, args: &[~str]) {
 fn cmd_status(_: &str, _: &[~str]) {
     let repo = get_current_repo();
 
-    let mut not_staged: ~[(~str, ~git2::GitStatus)] = ~[];
-    let mut staged: ~[(~str, ~git2::GitStatus)] = ~[];
+    let mut not_staged: ~[(~str, ~git2::Status)] = ~[];
+    let mut staged: ~[(~str, ~git2::Status)] = ~[];
 
     let status = repo.status();
     match repo.head().branch_name() {

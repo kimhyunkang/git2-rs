@@ -21,7 +21,7 @@ pub struct GitIndex {
 /// The `index` set of flags represents the status of file in the index relative to the HEAD,
 /// and the `wt` set of flags represent the status of the file in the working directory
 /// relative to the index.
-pub struct GitStatus {
+pub struct Status {
     pub index_new: bool,
     pub index_modified: bool,
     pub index_deleted: bool,

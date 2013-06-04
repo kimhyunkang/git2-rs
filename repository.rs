@@ -214,7 +214,7 @@ pub impl Repository {
     }
 
     /// Gather file statuses and run a callback for each one.
-    /// The callback is passed the path of the file and the status (GitStatus)
+    /// The callback is passed the path of the file and the status (Status)
     /// If the callback returns false, this function will stop looping
     /// 
     /// return values:
@@ -241,10 +241,10 @@ pub impl Repository {
     }
 
     /// Safer variant of each_status
-    fn status(&self) -> ~[(~str, ~GitStatus)] {
-        let mut status_list:~[(~str, ~GitStatus)] = ~[];
+    fn status(&self) -> ~[(~str, ~Status)] {
+        let mut status_list:~[(~str, ~Status)] = ~[];
         for self.each_status |path, status_flags| {
-            let status = ~GitStatus {
+            let status = ~Status {
                 index_new: status_flags & ext::GIT_STATUS_INDEX_NEW != 0,
                 index_modified: status_flags & ext::GIT_STATUS_INDEX_MODIFIED != 0,
                 index_deleted: status_flags & ext::GIT_STATUS_INDEX_DELETED != 0,
