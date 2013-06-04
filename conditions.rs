@@ -1,4 +1,4 @@
-pub use ext::git_error_t;
+pub use ext::{git_error_t, git_oid};
 pub use types::*;
 
 condition! {
@@ -15,6 +15,10 @@ condition! {
 
 condition! {
     bad_index: (~str, super::git_error_t) -> ~super::GitIndex;
+}
+
+condition! {
+    oid_fail: (~str, super::git_error_t) -> super::git_oid;
 }
 
 condition! {

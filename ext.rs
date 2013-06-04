@@ -79,6 +79,11 @@ pub struct git_strarray {
     count: size_t,
 }
 
+/* from <git2/oid.h> */
+pub struct git_oid {
+    id: [c_char, .. 20],
+}
+
 /* from <git2/checkout.h> */
 type git_checkout_strategy_t = uint;
 
@@ -248,7 +253,7 @@ pub extern {
 
     /* from <git2/index.h> */
     pub fn git_index_free(index: *git_index) -> c_void;
-    pub fn git_index_write(index: *git_index) -> c_int;
+    pub fn git_index_write_tree(out: *git_oid, index: *git_index) -> c_int;
     pub fn git_index_add_bypath(index: *git_index, path: *c_char) -> c_int;
     pub fn git_index_remove_bypath(index: *git_index, path: *c_char) -> c_int;
 

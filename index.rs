@@ -1,7 +1,7 @@
 use types::GitIndex;
 use ext;
 
-use conditions::index_fail::cond;
+use conditions;
 
 impl GitIndex {
     /// Add or update an index entry from a file on disk
@@ -27,7 +27,7 @@ impl GitIndex {
                     let err = ext::giterr_last();
                     let message = str::raw::from_c_str((*err).message);
                     let klass = (*err).klass;
-                    cond.raise((message, klass))
+                    conditions::index_fail::cond.raise((message, klass))
                 }
             }
         }
@@ -49,7 +49,7 @@ impl GitIndex {
                     let err = ext::giterr_last();
                     let message = str::raw::from_c_str((*err).message);
                     let klass = (*err).klass;
-                    cond.raise((message, klass))
+                    conditions::index_fail::cond.raise((message, klass))
                 }
             }
         }
@@ -58,13 +58,17 @@ impl GitIndex {
     /// Write an existing index object from memory back to disk using an atomic file lock.
     ///
     /// raises index_fail on error
-    pub fn write(&self) {
+    pub fn write(&self) -> ext::git_oid {
         unsafe {
-            if ext::git_index_write(self.index) != 0 {
+            let oid = ext::git_oid { id: [0, .. 20] };
+            let oid_ptr = ptr::to_unsafe_ptr(&oid);
+            if ext::git_index_write_tree(oid_ptr, self.index) == 0 {
+                oid 
+            } else {
                 let err = ext::giterr_last();
                 let message = str::raw::from_c_str((*err).message);
                 let klass = (*err).klass;
-                cond.raise((message, klass))
+                conditions::oid_fail::cond.raise((message, klass))
             }
         }
     }
