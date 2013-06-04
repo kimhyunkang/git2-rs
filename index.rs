@@ -20,7 +20,7 @@ impl GitIndex {
     /// @param index an existing index object
     /// @param path filename to add
     /// Returns None on success, Some(GitError) on error
-    pub fn add_bypath(&self, path: &str) -> Option<GitError> {
+    pub fn add_bypath(&mut self, path: &str) -> Option<GitError> {
         unsafe {
             do str::as_c_str(path) |c_path| {
                 do task::atomically {
