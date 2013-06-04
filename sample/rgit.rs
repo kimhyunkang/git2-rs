@@ -2,6 +2,7 @@ extern mod git2;
 
 fn main_usage(program: &str) {
     println(fmt!("usage: %s <command> [<args>]", program));
+    println("   add: Add file contents to the index");
     println("   init: Create an empty git repository");
     println("   clone: Clone a repository into a new directory");
     println("   status: Show the working tree status");
@@ -28,6 +29,8 @@ fn main() {
         cmd_clone(program, cmd_args);
     } else if cmd == ~"status" {
         cmd_status(program, cmd_args);
+    } else if cmd == ~"add" {
+        cmd_add(program, cmd_args);
     } else {
         main_usage(program);
     }
@@ -130,5 +133,21 @@ fn cmd_status(_: &str, _: &[~str]) {
         }
 
         println(path)
+    }
+}
+
+fn add_usage(program: &str) {
+    println(fmt!("usage: %s add <filename>", program));
+}
+
+fn cmd_add(program: &str, args: &[~str]) {
+    if args.len() == 0 {
+        add_usage(program);
+    } else {
+        let path = copy args[0];
+        let repo = get_current_repo();
+        let mut index = repo.index();
+        index.add_bypath(path);
+        index.write();
     }
 }
