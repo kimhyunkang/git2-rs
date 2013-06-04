@@ -248,6 +248,7 @@ pub extern {
 
     /* from <git2/index.h> */
     pub fn git_index_free(index: *git_index) -> c_void;
+    pub fn git_index_add_bypath(index: *git_index, path: *c_char) -> c_int;
 
     /* from <git2/status.h> */
     pub fn git_status_foreach(repo: *git_repository, callback: callback_t,
