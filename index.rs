@@ -33,6 +33,28 @@ impl GitIndex {
         }
     }
 
+    /// Remove an index entry corresponding to a file on disk
+    ///
+    /// The file `path` must be relative to the repository's working folder.  It may exist.
+    ///
+    /// If this file currently is the result of a merge conflict, this
+    /// file will no longer be marked as conflicting.  The data about
+    /// the conflict will be moved to the "resolve undo" (REUC) section.
+    ///
+    /// raises index_fail on error
+    pub fn remove_bypath(&mut self, path: &str) {
+        unsafe {
+            do str::as_c_str(path) |c_path| {
+                if ext::git_index_remove_bypath(self.index, c_path) != 0 {
+                    let err = ext::giterr_last();
+                    let message = str::raw::from_c_str((*err).message);
+                    let klass = (*err).klass;
+                    cond.raise((message, klass))
+                }
+            }
+        }
+    }
+
     /// Write an existing index object from memory back to disk using an atomic file lock.
     ///
     /// raises index_fail on error
