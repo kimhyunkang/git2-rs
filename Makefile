@@ -1,4 +1,4 @@
-lib: git2.rs repository.rs error.rs ext.rs types.rs
+lib: git2.rs repository.rs conditions.rs ext.rs types.rs index.rs reference.rs
 	rustc --lib git2.rs -O
 
 rgit: lib

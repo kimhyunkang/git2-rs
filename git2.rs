@@ -7,9 +7,9 @@
 
 #[crate_type = "lib"];
 
-pub mod error;
 pub mod ext;
 pub mod types;
+pub mod conditions;
 pub mod repository;
 pub mod reference;
 pub mod index;

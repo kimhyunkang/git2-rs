@@ -1,4 +1,4 @@
-use types::{GitIndex, GitError};
+use types::GitIndex;
 use ext;
 
 impl GitIndex {
@@ -20,19 +20,16 @@ impl GitIndex {
     /// @param index an existing index object
     /// @param path filename to add
     /// Returns None on success, Some(GitError) on error
-    pub fn add_bypath(&mut self, path: &str) -> Option<GitError> {
+    pub fn add_bypath(&mut self, path: &str) {
+        use conditions::index_fail::cond;
+
         unsafe {
             do str::as_c_str(path) |c_path| {
-                do task::atomically {
-                    if ext::git_index_add_bypath(self.index, c_path) == 0 {
-                        None
-                    } else {
-                        let err = ext::giterr_last();
-                        Some(GitError {
-                                message: str::raw::from_c_str((*err).message),
-                                klass: (*err).klass,
-                            })
-                    }
+                if ext::git_index_add_bypath(self.index, c_path) != 0 {
+                    let err = ext::giterr_last();
+                    let message = str::raw::from_c_str((*err).message);
+                    let klass = (*err).klass;
+                    cond.raise((message, klass))
                 }
             }
         }
