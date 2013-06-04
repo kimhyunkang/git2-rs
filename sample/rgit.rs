@@ -34,13 +34,8 @@ fn main() {
 }
 
 fn get_current_repo() -> @git2::Repository {
-    match git2::repository::discover(&".", false, &"") {
-        Ok(dir) => match git2::repository::open(dir) {
-            Ok(repo) => repo,
-            Err(e) => fail!(copy e.message),
-        },
-        Err(e) => fail!(copy e.message),
-    }
+    let dir = git2::repository::discover(&".", false, &"");
+    git2::repository::open(dir)
 }
 
 fn cmd_init(args: &[~str]) {
@@ -51,10 +46,8 @@ fn cmd_init(args: &[~str]) {
         copy args[0]
     };
 
-    match git2::repository::init(path, false) {
-        Ok(_) => println(fmt!("Initialized empty Git repository in %s", path)),
-        Err(e) => io::stderr().write_line(e.message),
-    }
+    git2::repository::init(path, false);
+    println(fmt!("Initialized empty Git repository in %s", path));
 }
 
 fn clone_usage(program: &str) {
@@ -72,10 +65,8 @@ fn cmd_clone(program: &str, args: &[~str]) {
             copy args[1]
         };
 
-        match git2::repository::clone(origin, local_path) {
-            Ok(_) => println("done"),
-            Err(e) => io::stderr().write_line(e.message),
-        }
+        git2::repository::clone(origin, local_path);
+        println("done");
     }
 }
 
@@ -85,64 +76,59 @@ fn cmd_status(_: &str, _: &[~str]) {
     let mut not_staged: ~[(~str, ~git2::GitStatus)] = ~[];
     let mut staged: ~[(~str, ~git2::GitStatus)] = ~[];
 
-    match repo.status() {
-        Ok(status) => {
-            let head = repo.head();
-            match head.get_ref().branch_name() {
-                Some(branch) => println(fmt!("On branch %s", branch)),
-                None => println("Not currently on any branch"),
-            }
+    let status = repo.status();
+    match repo.head().branch_name() {
+        Some(branch) => println(fmt!("On branch %s", branch)),
+        None => println("Not currently on any branch"),
+    }
 
-            for status.each() |&tup| {
-                let (path, stat) = tup;
-                if (stat.index_new || stat.index_modified || stat.index_deleted || stat.index_renamed
-                    || stat.index_typechange)
-                {
-                    staged.push((copy path, copy stat))
-                }
-                if stat.wt_new || stat.wt_modified || stat.wt_deleted || stat.wt_typechange {
-                    not_staged.push((copy path, copy stat))
-                }
-            }
+    for status.each() |&tup| {
+        let (path, stat) = tup;
+        if (stat.index_new || stat.index_modified || stat.index_deleted || stat.index_renamed
+            || stat.index_typechange)
+        {
+            staged.push((copy path, copy stat))
+        }
+        if stat.wt_new || stat.wt_modified || stat.wt_deleted || stat.wt_typechange {
+            not_staged.push((copy path, copy stat))
+        }
+    }
 
-            if !staged.is_empty() {
-                println("Changed staged for commit")
-            }
-            for staged.each() |&tup| {
-                let (path, stat) = tup;
-                if stat.index_new {
-                    print("new: ")
-                } else if stat.index_modified {
-                    print("modified: ")
-                } else if stat.index_deleted {
-                    print("deleted: ")
-                } else if stat.index_renamed {
-                    print("renamed: ")
-                } else if stat.index_typechange {
-                    print("typechange: ")
-                }
+    if !staged.is_empty() {
+        println("Changed staged for commit")
+    }
+    for staged.each() |&tup| {
+        let (path, stat) = tup;
+        if stat.index_new {
+            print("new: ")
+        } else if stat.index_modified {
+            print("modified: ")
+        } else if stat.index_deleted {
+            print("deleted: ")
+        } else if stat.index_renamed {
+            print("renamed: ")
+        } else if stat.index_typechange {
+            print("typechange: ")
+        }
 
-                println(path)
-            }
+        println(path)
+    }
 
-            if !not_staged.is_empty() {
-                println("Changed not staged for commit")
-            }
-            for not_staged.each() |&tup| {
-                let (path, stat) = tup;
-                if stat.wt_new {
-                    print("new: ")
-                } else if stat.wt_modified {
-                    print("modified: ")
-                } else if stat.wt_deleted {
-                    print("deleted: ")
-                } else if stat.wt_typechange {
-                    print("typechange: ")
-                }
+    if !not_staged.is_empty() {
+        println("Changed not staged for commit")
+    }
+    for not_staged.each() |&tup| {
+        let (path, stat) = tup;
+        if stat.wt_new {
+            print("new: ")
+        } else if stat.wt_modified {
+            print("modified: ")
+        } else if stat.wt_deleted {
+            print("deleted: ")
+        } else if stat.wt_typechange {
+            print("typechange: ")
+        }
 
-                println(path)
-            }
-        },
-        Err(e) => fail!(copy e.message),
+        println(path)
     }
 }
