@@ -11,6 +11,8 @@ pub mod error;
 pub mod ext;
 pub mod types;
 pub mod repository;
+pub mod reference;
+pub mod index;
 
 pub type Repository = types::Repository;
 pub type Reference = types::Reference;
