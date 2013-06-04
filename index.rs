@@ -17,9 +17,7 @@ impl GitIndex {
     /// file will no longer be marked as conflicting.  The data about
     /// the conflict will be moved to the "resolve undo" (REUC) section.
     ///
-    /// @param index an existing index object
-    /// @param path filename to add
-    /// Returns None on success, Some(GitError) on error
+    /// raises index_fail on error
     pub fn add_bypath(&mut self, path: &str) {
         use conditions::index_fail::cond;
 
