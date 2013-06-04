@@ -187,7 +187,7 @@ pub impl Repository {
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
 
             if ext::git_repository_index(pptr, self.repo) == 0 {
-                ~GitIndex { index: ptr_to_ref, owner: Some(self) }
+                ~GitIndex { index: ptr_to_ref, owner: self }
             } else {
                 raise!(conditions::bad_index::cond)
             }

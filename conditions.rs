@@ -18,7 +18,7 @@ condition! {
 }
 
 condition! {
-    oid_fail: (~str, super::git_error_t) -> super::git_oid;
+    bad_tree: (~str, super::git_error_t) -> ~super::Tree;
 }
 
 condition! {

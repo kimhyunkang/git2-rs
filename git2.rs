@@ -13,6 +13,7 @@ pub mod conditions;
 pub mod repository;
 pub mod reference;
 pub mod index;
+pub mod tree;
 
 pub type Repository = types::Repository;
 pub type Reference = types::Reference;

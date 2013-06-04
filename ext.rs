@@ -263,4 +263,8 @@ pub extern {
 
     /* from <git2/branch.h> */
     pub fn git_branch_name(out: **c_char, c_ref: *git_reference) -> c_int;
+
+    /* from <git2/tree.h> */
+    pub fn git_tree_free(tree: *git_tree) -> c_void;
+    pub fn git_tree_lookup(out: **git_tree, repo: *git_repository, id: *git_oid) -> c_int;
 }
