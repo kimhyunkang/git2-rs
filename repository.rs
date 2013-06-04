@@ -203,7 +203,7 @@ pub impl Repository {
 
             do atomic_err {
                 if ext::git_repository_index(pptr, self.repo) == 0 {
-                    Some( ~GitIndex { index: ptr_to_ref, repo_ptr: Some(self) } )
+                    Some( ~GitIndex { index: ptr_to_ref, owner: Some(self) } )
                 } else {
                     None
                 }

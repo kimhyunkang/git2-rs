@@ -16,7 +16,7 @@ pub struct Reference {
 
 pub struct GitIndex {
     pub index: *ext::git_index,
-    pub repo_ptr: Option<@Repository>,
+    pub owner: Option<@Repository>,
 }
 
 /// Status flags for a single file.
