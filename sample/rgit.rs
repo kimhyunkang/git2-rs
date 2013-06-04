@@ -87,6 +87,12 @@ fn cmd_status(_: &str, _: &[~str]) {
 
     match repo.status() {
         Ok(status) => {
+            let head = repo.head();
+            match head.get_ref().branch_name() {
+                Some(branch) => println(fmt!("On branch %s", branch)),
+                None => println("Not currently on any branch"),
+            }
+
             for status.each() |&tup| {
                 let (path, stat) = tup;
                 if (stat.index_new || stat.index_modified || stat.index_deleted || stat.index_renamed

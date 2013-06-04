@@ -252,4 +252,7 @@ pub extern {
     /* from <git2/status.h> */
     pub fn git_status_foreach(repo: *git_repository, callback: callback_t,
                                 payload: *c_void) -> c_int;
+
+    /* from <git2/branch.h> */
+    pub fn git_branch_name(out: **c_char, c_ref: *git_reference) -> c_int;
 }
