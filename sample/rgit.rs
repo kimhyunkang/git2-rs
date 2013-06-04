@@ -5,6 +5,7 @@ fn main_usage(program: &str) {
     println("   add: Add file contents to the index");
     println("   init: Create an empty git repository");
     println("   clone: Clone a repository into a new directory");
+    println("   rm: Remove files from the working tree and from the index");
     println("   status: Show the working tree status");
 }
 
@@ -31,6 +32,8 @@ fn main() {
         cmd_status(program, cmd_args);
     } else if cmd == ~"add" {
         cmd_add(program, cmd_args);
+    } else if cmd == ~"rm" {
+        cmd_rm(program, cmd_args);
     } else {
         main_usage(program);
     }
@@ -148,6 +151,22 @@ fn cmd_add(program: &str, args: &[~str]) {
         let repo = get_current_repo();
         let mut index = repo.index();
         index.add_bypath(path);
+        index.write();
+    }
+}
+
+fn rm_usage(program: &str) {
+    println(fmt!("usage: %s rm <filename>", program));
+}
+
+fn cmd_rm(program: &str, args: &[~str]) {
+    if args.len() == 0 {
+        add_usage(program);
+    } else {
+        let path = copy args[0];
+        let repo = get_current_repo();
+        let mut index = repo.index();
+        index.remove_bypath(path);
         index.write();
     }
 }
