@@ -1,5 +1,5 @@
 pub use ext::{git_error_t, git_oid};
-pub use types::*;
+pub use super::*;
 
 condition! {
     bad_repo: (~str, super::git_error_t) -> @super::Repository;

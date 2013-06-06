@@ -1,5 +1,5 @@
 use core::libc::c_char;
-use types::Reference;
+use super::Reference;
 use ext;
 
 pub impl Reference {

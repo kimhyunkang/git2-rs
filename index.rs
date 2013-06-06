@@ -1,4 +1,4 @@
-use types::{GitIndex, Tree};
+use super::{GitIndex, Tree};
 use ext;
 
 use conditions;

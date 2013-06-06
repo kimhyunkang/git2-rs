@@ -1,7 +1,7 @@
 use core::libc::{c_char, c_int, c_uint, c_void, size_t};
 use ext;
 use conditions;
-use types::*;
+use super::*;
 
 static PATH_BUF_SZ: uint = 1024u;
 

@@ -1,4 +1,4 @@
-use types::Tree;
+use super::Tree;
 use ext;
 
 #[unsafe_destructor]
