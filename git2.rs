@@ -7,6 +7,8 @@
 
 #[crate_type = "lib"];
 
+extern mod std;
+
 pub mod ext;
 pub mod conditions;
 pub mod repository;
@@ -31,6 +33,12 @@ pub struct GitIndex {
 pub struct Tree {
     pub tree: *ext::git_tree,
     pub owner: @Repository,
+}
+
+pub struct Signature {
+    pub name: ~str,
+    pub email: ~str,
+    pub when: std::time::Tm,
 }
 
 /// Status flags for a single file.
