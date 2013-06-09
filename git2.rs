@@ -15,6 +15,7 @@ pub mod repository;
 pub mod reference;
 pub mod index;
 pub mod tree;
+pub mod commit;
 pub mod oid;
 
 pub struct Repository {
@@ -33,6 +34,11 @@ pub struct GitIndex {
 
 pub struct Tree {
     pub tree: *ext::git_tree,
+    pub owner: @Repository,
+}
+
+pub struct Commit {
+    pub commit: *ext::git_commit,
     pub owner: @Repository,
 }
 

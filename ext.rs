@@ -212,6 +212,27 @@ pub type git_repository = c_void;
 pub type git_reference = c_void;
 pub type git_tree = c_void;
 pub type git_index = c_void;
+pub type git_commit = c_void;
+
+#[cfg(target_os = "android")]
+#[cfg(target_os = "freebsd")]
+#[cfg(target_os = "linux")]
+#[cfg(target_os = "macos")]
+pub type git_time_t = i64;
+
+#[cfg(target_os = "win32")]
+pub type git_time_t = core::libc::types::os::arch::extra::time64_t;
+
+pub struct git_time {
+    time: git_time_t,
+    offset: c_int,
+}
+
+pub struct git_signature {
+    pub name: *c_char,
+    pub email: *c_char,
+    pub when: git_time,
+}
 
 // value type of 'crust' functions is *u8
 pub type callback_t = *u8;
