@@ -82,9 +82,13 @@ fn cmd_status(_: &str, _: &[~str]) {
     let mut not_staged: ~[(~str, ~git2::Status)] = ~[];
     let mut staged: ~[(~str, ~git2::Status)] = ~[];
 
-    match repo.head().branch_name() {
-        Some(branch) => println(fmt!("On branch %s", branch)),
-        None => println("Not currently on any branch"),
+    if repo.is_empty() {
+        println("Empty repository")
+    } else {
+        match repo.head().branch_name() {
+            Some(branch) => println(fmt!("On branch %s", branch)),
+            None => println("Not currently on any branch"),
+        }
     }
 
     let status = repo.status();
