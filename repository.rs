@@ -150,16 +150,16 @@ pub impl Repository {
 
     /// Lookup a reference by name in a repository.
     /// The name will be checked for validity.
-    fn lookup(@mut self, name: &str) -> ~Reference {
+    fn lookup(@mut self, name: &str) -> Option<~Reference> {
         unsafe {
             let ptr_to_ref: *ext::git_reference = ptr::null();
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
 
             do str::as_c_str(name) |c_name| {
                 if(ext::git_reference_lookup(pptr, self.repo, c_name) == 0) {
-                    ~Reference { c_ref: ptr_to_ref, repo_ptr: self }
+                    Some( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
                 } else {
-                    raise!(conditions::bad_ref::cond)
+                    None
                 }
             }
         }
