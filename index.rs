@@ -1,4 +1,4 @@
-use super::{GitIndex, Tree};
+use super::{GitIndex, Tree, OID};
 use ext;
 
 use conditions;
@@ -63,7 +63,7 @@ impl GitIndex {
     /// raises index_fail on error
     pub fn write(&self) -> ~Tree {
         unsafe {
-            let oid = ext::git_oid { id: [0, .. 20] };
+            let oid = OID { id: [0, .. 20] };
             let oid_ptr = ptr::to_unsafe_ptr(&oid);
             if ext::git_index_write_tree(oid_ptr, self.index) == 0 {
                 let ptr_to_tree: *ext::git_tree = ptr::null();

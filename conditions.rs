@@ -1,4 +1,4 @@
-pub use ext::{git_error_t, git_oid};
+pub use ext::git_error_t;
 pub use super::*;
 
 condition! {
@@ -26,6 +26,10 @@ condition! {
 }
 
 condition! {
+    bad_commit: (~str, super::git_error_t) -> ~super::Commit;
+}
+
+condition! {
     check_fail: (~str, super::git_error_t) -> bool;
 }
 
@@ -35,4 +39,8 @@ condition! {
 
 condition! {
     index_fail: (~str, super::git_error_t) -> ();
+}
+
+condition! {
+    commit_fail: (~str, super::git_error_t) -> ();
 }

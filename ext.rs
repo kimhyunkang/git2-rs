@@ -79,11 +79,6 @@ pub struct git_strarray {
     count: size_t,
 }
 
-/* from <git2/oid.h> */
-pub struct git_oid {
-    id: [c_char, .. 20],
-}
-
 /* from <git2/checkout.h> */
 type git_checkout_strategy_t = uint;
 
@@ -276,7 +271,7 @@ pub extern {
 
     /* from <git2/index.h> */
     pub fn git_index_free(index: *git_index) -> c_void;
-    pub fn git_index_write_tree(out: *git_oid, index: *git_index) -> c_int;
+    pub fn git_index_write_tree(out: *super::OID, index: *git_index) -> c_int;
     pub fn git_index_add_bypath(index: *git_index, path: *c_char) -> c_int;
     pub fn git_index_remove_bypath(index: *git_index, path: *c_char) -> c_int;
 
@@ -289,9 +284,21 @@ pub extern {
 
     /* from <git2/tree.h> */
     pub fn git_tree_free(tree: *git_tree) -> c_void;
-    pub fn git_tree_lookup(out: **git_tree, repo: *git_repository, id: *git_oid) -> c_int;
+    pub fn git_tree_lookup(out: **git_tree, repo: *git_repository, id: *super::OID) -> c_int;
 
     /* from <git2/oid.h> */
     pub fn git_oid_fromstr(out: &mut super::OID, c_str: *c_char) -> c_int;
     pub fn git_oid_fmt(out: *mut c_char, oid: &super::OID) -> c_int;
+
+    /* from <git2/commit.h> */
+    pub fn git_commit_free(commit: *git_commit) -> c_void;
+    pub fn git_commit_id(commit: *git_commit) -> *super::OID;
+    pub fn git_commit_message_encoding(commit: *git_commit) -> *c_char;
+    pub fn git_commit_message(commit: *git_commit) -> *c_char;
+    pub fn git_commit_committer(commit: *git_commit) -> *git_signature;
+    pub fn git_commit_author(commit: *git_commit) -> *git_signature;
+    pub fn git_commit_tree(tree_out: &mut *git_tree, commit: *git_commit) -> c_int;
+    pub fn git_commit_parentcount(commit: *git_commit) -> c_uint;
+    pub fn git_commit_parent(out: &mut *git_commit, commit: *git_commit, n: c_uint) -> c_int;
+    pub fn git_commit_parent_id(commit: *git_commit, n: c_uint) -> *super::OID;
 }
