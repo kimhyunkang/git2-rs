@@ -171,7 +171,7 @@ fn rm_usage(program: &str) {
 
 fn cmd_rm(program: &str, args: &[~str]) {
     if args.len() == 0 {
-        add_usage(program);
+        rm_usage(program);
     } else {
         let path = copy args[0];
         let repo = get_current_repo();
