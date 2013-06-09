@@ -1,6 +1,7 @@
 use core::libc::{c_char, c_int, c_uint, c_void, size_t};
 use ext;
 use conditions;
+use signature;
 use super::*;
 
 static PATH_BUF_SZ: uint = 1024u;
@@ -271,6 +272,70 @@ pub impl Repository {
             status_list.push((path, status));
         };
         status_list
+    }
+
+    /// Create new commit in the repository from a list of Commit pointers
+    ///
+    /// Returns the created commit. The commit will be written to the Object Database and
+    ///  the given reference will be updated to point to it
+    ///
+    /// id: Pointer in which to store the OID of the newly created commit
+    ///
+    /// update_ref: If not None, name of the reference that
+    ///  will be updated to point to this commit. If the reference
+    ///  is not direct, it will be resolved to a direct reference.
+    ///  Use "HEAD" to update the HEAD of the current branch and
+    ///  make it point to this commit. If the reference doesn't
+    ///  exist yet, it will be created.
+    ///
+    /// author: Signature with author and author time of commit
+    ///
+    /// committer: Signature with committer and commit time of commit
+    ///
+    /// message_encoding: The encoding for the message in the
+    ///  commit, represented with a standard encoding name.
+    ///  E.g. "UTF-8". If None, no encoding header is written and
+    ///  UTF-8 is assumed.
+    ///
+    /// message: Full message for this commit
+    ///
+    /// tree: An instance of a Tree object that will
+    ///  be used as the tree for the commit. This tree object must
+    ///  also be owned by `self`
+    ///
+    /// parents: Vector of Commit objects that will be used as the parents for this commit.
+    ///  All the given commits must be owned by `self`.
+    fn commit(&mut self, update_ref: Option<&str>, author: &Signature, committer: &Signature,
+            message_encoding: Option<&str>, message: &str, tree: &Tree,
+            parents: &[~Commit]) -> OID
+    {
+        unsafe {
+            let c_ref = 
+            match update_ref {
+                None => ptr::null(),
+                Some(uref) => str::as_c_str(uref, |ptr| {ptr}),
+            };
+            let c_author = signature::to_c_sig(author);
+            let c_committer = signature::to_c_sig(committer);
+            let c_encoding =
+            match message_encoding {
+                None => ptr::null(),
+                Some(enc) => str::as_c_str(enc, |ptr| {ptr}),
+            };
+            let c_message = str::as_c_str(message, |ptr| {ptr});
+            let mut oid = OID { id: [0, .. 20] };
+            let c_parents = do vec::map(parents) |p| { p.commit };
+            do vec::as_const_buf(c_parents) |parent_ptr, len| {
+                let res = ext::git_commit_create(&mut oid, self.repo, c_ref,
+                            &c_author, &c_committer, c_encoding, c_message, tree.tree,
+                            len as c_int, parent_ptr);
+                if res != 0 {
+                    oid
+                } else {
+                    raise!(conditions::bad_oid::cond)
+                }
+            }
+        }
     }
 }
 

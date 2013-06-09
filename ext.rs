@@ -303,4 +303,8 @@ pub extern {
     pub fn git_commit_parentcount(commit: *git_commit) -> c_uint;
     pub fn git_commit_parent(out: &mut *git_commit, commit: *git_commit, n: c_uint) -> c_int;
     pub fn git_commit_parent_id(commit: *git_commit, n: c_uint) -> *super::OID;
+    pub fn git_commit_create(id: &mut super::OID, repo: *git_repository,
+        update_ref: *c_char, author: &git_signature, committer: &git_signature,
+        message_encoding: *c_char, message: *c_char, tree: *git_tree,
+        parent_count: c_int, parents: *const *git_commit) -> c_int;
 }

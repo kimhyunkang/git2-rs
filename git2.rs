@@ -16,6 +16,7 @@ pub mod reference;
 pub mod index;
 pub mod tree;
 pub mod commit;
+pub mod signature;
 pub mod oid;
 
 pub struct Repository {
