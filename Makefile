@@ -12,3 +12,4 @@ git2_test: git2_test.rs lib
 
 clean:
 	rm -rf git2_test *.dylib *.dSYM *.so *.o
+	cd sample; ${MAKE} clean
