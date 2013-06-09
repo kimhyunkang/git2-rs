@@ -291,6 +291,8 @@ pub extern {
     pub fn git_oid_fmt(out: *mut c_char, oid: &super::OID) -> c_int;
 
     /* from <git2/commit.h> */
+    pub fn git_commit_lookup(commit: &mut *git_commit, repo: *git_repository,
+        id: &super::OID) -> c_int;
     pub fn git_commit_free(commit: *git_commit) -> c_void;
     pub fn git_commit_id(commit: *git_commit) -> *super::OID;
     pub fn git_commit_message_encoding(commit: *git_commit) -> *c_char;

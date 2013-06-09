@@ -164,6 +164,18 @@ pub impl Repository {
         }
     }
 
+    /// Lookup a commit object from repository
+    fn lookup_commit(@self, id: &OID) -> Option<~Commit> {
+        unsafe {
+            let mut commit: *ext::git_commit = ptr::null();
+            if ext::git_commit_lookup(&mut commit, self.repo, id) == 0 {
+                Some( ~Commit { commit: commit, owner: self } )
+            } else {
+                None
+            }
+        }
+    }
+
     /// Updates files in the index and the working tree to match the content of
     /// the commit pointed at by HEAD.
     /// This function does not accept options for now
