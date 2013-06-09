@@ -15,6 +15,7 @@ pub mod repository;
 pub mod reference;
 pub mod index;
 pub mod tree;
+pub mod oid;
 
 pub struct Repository {
     pub repo: *ext::git_repository,
@@ -39,6 +40,10 @@ pub struct Signature {
     pub name: ~str,
     pub email: ~str,
     pub when: std::time::Tm,
+}
+
+pub struct OID {
+    pub id: [core::libc::c_char, ..20],
 }
 
 /// Status flags for a single file.

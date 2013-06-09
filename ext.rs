@@ -267,4 +267,8 @@ pub extern {
     /* from <git2/tree.h> */
     pub fn git_tree_free(tree: *git_tree) -> c_void;
     pub fn git_tree_lookup(out: **git_tree, repo: *git_repository, id: *git_oid) -> c_int;
+
+    /* from <git2/oid.h> */
+    pub fn git_oid_fromstr(out: &mut super::OID, c_str: *c_char) -> c_int;
+    pub fn git_oid_fmt(out: *mut c_char, oid: &super::OID) -> c_int;
 }
