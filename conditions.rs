@@ -22,6 +22,10 @@ condition! {
 }
 
 condition! {
+    bad_oid: (~str, super::git_error_t) -> super::OID;
+}
+
+condition! {
     check_fail: (~str, super::git_error_t) -> bool;
 }
 

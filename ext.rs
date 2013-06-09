@@ -239,6 +239,8 @@ pub extern {
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
     pub fn git_reference_lookup(out: **git_reference, repo: *git_repository,
                                 name: *c_char) -> c_int;
+    pub fn git_reference_resolve(out: &mut *git_reference, c_ref: *git_reference) -> c_int;
+    pub fn git_reference_target(c_ref: *git_reference) -> *super::OID;
 
     /* from <git2/threads.h> */
     pub fn git_threads_init() -> c_void;
