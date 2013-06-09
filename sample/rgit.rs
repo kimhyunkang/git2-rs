@@ -39,7 +39,7 @@ fn main() {
     }
 }
 
-fn get_current_repo() -> @git2::Repository {
+fn get_current_repo() -> @mut git2::Repository {
     let dir = git2::repository::discover(&".", false, &"");
     git2::repository::open(dir)
 }

@@ -21,14 +21,14 @@ macro_rules! raise {
 ///
 /// The method will automatically detect if 'path' is a normal
 /// or bare repository or raise bad_repo if 'path' is neither.
-pub fn open(path: &str) -> @Repository
+pub fn open(path: &str) -> @mut Repository
 {
     unsafe {
         let ptr_to_repo: *ext::git_repository = ptr::null();
         let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path) |c_path| {
             if ext::git_repository_open(ptr2, c_path) == 0 {
-                @Repository { repo: ptr_to_repo }
+                @mut Repository { repo: ptr_to_repo }
             } else {
                 raise!(conditions::bad_repo::cond)
             }
@@ -41,14 +41,14 @@ pub fn open(path: &str) -> @Repository
 /// created at the pointed path. If false, provided path will be
 /// considered as the working directory into which the .git directory
 /// will be created.
-pub fn init(path: &str, is_bare: bool) -> @Repository
+pub fn init(path: &str, is_bare: bool) -> @mut Repository
 {
     unsafe {
         let ptr_to_repo: *ext::git_repository = ptr::null();
         let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(path) |c_path| {
             if ext::git_repository_init(ptr2, c_path, is_bare as c_uint) == 0 {
-                @Repository { repo: ptr_to_repo }
+                @mut Repository { repo: ptr_to_repo }
             } else {
                 raise!(conditions::bad_repo::cond)
             }
@@ -92,14 +92,14 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str) -> ~str
 
 /// Clone a remote repository, and checkout the branch pointed to by the remote
 /// this function do not receive options for now
-pub fn clone(url: &str, local_path: &str) -> @Repository {
+pub fn clone(url: &str, local_path: &str) -> @mut Repository {
     unsafe {
         let ptr_to_repo: *ext::git_repository = ptr::null();
         let pptr = ptr::to_unsafe_ptr(&ptr_to_repo);
         do str::as_c_str(url) |c_url| {
             do str::as_c_str(local_path) |c_path| {
                 if ext::git_clone(pptr, c_url, c_path, ptr::null()) == 0 {
-                    @Repository { repo: ptr_to_repo }
+                    @mut Repository { repo: ptr_to_repo }
                 } else {
                     raise!(conditions::bad_repo::cond)
                 }
@@ -135,7 +135,7 @@ pub impl Repository {
     }
 
     /// Retrieve and resolve the reference pointed at by HEAD.
-    fn head(@self) -> ~Reference {
+    fn head(@mut self) -> ~Reference {
         unsafe {
             let ptr_to_ref: *ext::git_reference = ptr::null();
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
@@ -150,7 +150,7 @@ pub impl Repository {
 
     /// Lookup a reference by name in a repository.
     /// The name will be checked for validity.
-    fn lookup(@self, name: &str) -> ~Reference {
+    fn lookup(@mut self, name: &str) -> ~Reference {
         unsafe {
             let ptr_to_ref: *ext::git_reference = ptr::null();
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
@@ -166,7 +166,7 @@ pub impl Repository {
     }
 
     /// Lookup a commit object from repository
-    fn lookup_commit(@self, id: &OID) -> Option<~Commit> {
+    fn lookup_commit(@mut self, id: &OID) -> Option<~Commit> {
         unsafe {
             let mut commit: *ext::git_commit = ptr::null();
             if ext::git_commit_lookup(&mut commit, self.repo, id) == 0 {
@@ -194,7 +194,7 @@ pub impl Repository {
     /// If a custom index has not been set, the default
     /// index for the repository will be returned (the one
     /// located in `.git/index`).
-    fn index(@self) -> ~GitIndex {
+    fn index(@mut self) -> ~GitIndex {
         unsafe {
             let ptr_to_ref: *ext::git_index = ptr::null();
             let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);

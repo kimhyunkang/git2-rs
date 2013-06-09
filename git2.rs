@@ -25,22 +25,22 @@ pub struct Repository {
 
 pub struct Reference {
     pub c_ref: *ext::git_reference,
-    pub repo_ptr: @Repository,
+    pub repo_ptr: @mut Repository,
 }
 
 pub struct GitIndex {
     pub index: *ext::git_index,
-    pub owner: @Repository,
+    pub owner: @mut Repository,
 }
 
 pub struct Tree {
     pub tree: *ext::git_tree,
-    pub owner: @Repository,
+    pub owner: @mut Repository,
 }
 
 pub struct Commit {
     pub commit: *ext::git_commit,
-    pub owner: @Repository,
+    pub owner: @mut Repository,
 }
 
 pub struct Signature {

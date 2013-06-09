@@ -2,7 +2,7 @@ pub use ext::git_error_t;
 pub use super::*;
 
 condition! {
-    bad_repo: (~str, super::git_error_t) -> @super::Repository;
+    bad_repo: (~str, super::git_error_t) -> @mut super::Repository;
 }
 
 condition! {
