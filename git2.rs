@@ -74,6 +74,7 @@ pub struct Status {
 
     pub ignored: bool,
 }
+
 // FIXME: there should be better ways to do this...
 // if you call this library in multiple tasks,
 // this function must be called before calling any other functions in library
