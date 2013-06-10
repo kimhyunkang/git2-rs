@@ -15,14 +15,13 @@ macro_rules! raise {
 
 pub impl Commit {
     /// get the id of the commit
-    fn id(&self) -> OID
+    fn id(&self) -> &'self OID
     {
-        let mut oid = OID { id: [0, ..20] };
         unsafe {
-            let result_ptr = ext::git_commit_id(self.commit);
-            ptr::copy_memory(&mut oid, result_ptr, 1);
+            // OID pointer returned by git_commit_id is const pointer
+            // so it's safe to use as long as self is alive
+            cast::transmute(ext::git_commit_id(self.commit))
         }
-        return oid;
     }
 
     /// Get the encoding for the message of the commit,
