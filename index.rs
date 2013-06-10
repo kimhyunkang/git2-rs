@@ -61,7 +61,27 @@ impl GitIndex {
     /// Write an existing index object from memory back to disk using an atomic file lock.
     ///
     /// raises index_fail on error
-    pub fn write(&self) -> ~Tree {
+    pub fn write(&self)
+    {
+        unsafe {
+            if ext::git_index_write(self.index) != 0 {
+                raise!(conditions::index_fail::cond)
+            }
+        }
+    }
+
+    /// Write the index as a tree
+    ///
+    /// This method will scan the index and write a representation
+    /// of its current state back to disk; it recursively creates
+    /// tree objects for each of the subtrees stored in the index,
+    /// and returns the root tree. This is the Tree that can be used e.g. to create a commit.
+    ///
+    /// The index instance cannot be bare, and needs to be associated
+    /// to an existing repository.
+    ///
+    /// The index must not contain any file in conflict.
+    pub fn write_tree(&self) -> ~Tree {
         unsafe {
             let oid = OID { id: [0, .. 20] };
             let oid_ptr = ptr::to_unsafe_ptr(&oid);
