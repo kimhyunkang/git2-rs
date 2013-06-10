@@ -66,9 +66,8 @@ impl GitIndex {
             let oid = OID { id: [0, .. 20] };
             let oid_ptr = ptr::to_unsafe_ptr(&oid);
             if ext::git_index_write_tree(oid_ptr, self.index) == 0 {
-                let ptr_to_tree: *ext::git_tree = ptr::null();
-                let pptr = ptr::to_unsafe_ptr(&ptr_to_tree);
-                if ext::git_tree_lookup(pptr, self.owner.repo, oid_ptr) == 0 {
+                let mut ptr_to_tree: *ext::git_tree = ptr::null();
+                if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, oid_ptr) == 0 {
                     ~Tree { tree: ptr_to_tree, owner: self.owner }
                 } else {
                     raise!(conditions::bad_tree::cond)

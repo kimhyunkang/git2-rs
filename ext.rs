@@ -202,12 +202,25 @@ pub static GIT_STATUS_WT_TYPECHANGE:c_uint    = (1u << 10) as c_uint;
 pub static GIT_STATUS_IGNORED:c_uint          = (1u << 14) as c_uint;
 
 /* from <git2/types.h> */
+pub type git_otype = c_int;
+pub static GIT_OBJ_ANY:git_otype = -2;       /**< Object can be any of the following */
+pub static GIT_OBJ_BAD:git_otype = -1;       /**< Object is invalid. */
+pub static GIT_OBJ__EXT1:git_otype = 0;      /**< Reserved for future use. */
+pub static GIT_OBJ_COMMIT:git_otype = 1;     /**< A commit object. */
+pub static GIT_OBJ_TREE:git_otype = 2;       /**< A tree (directory listing) object. */
+pub static GIT_OBJ_BLOB:git_otype = 3;       /**< A file revision object. */
+pub static GIT_OBJ_TAG:git_otype = 4;        /**< An annotated tag object. */
+pub static GIT_OBJ__EXT2:git_otype = 5;      /**< Reserved for future use. */
+pub static GIT_OBJ_OFS_DELTA:git_otype = 6; /**< A delta, base is given by an offset. */
+pub static GIT_OBJ_REF_DELTA:git_otype = 7; /**< A delta, base is given by object id. */
+
 // the storage size of these types are unknown
 pub type git_repository = c_void;
 pub type git_reference = c_void;
 pub type git_tree = c_void;
 pub type git_index = c_void;
 pub type git_commit = c_void;
+pub type git_object = c_void;
 
 #[cfg(target_os = "android")]
 #[cfg(target_os = "freebsd")]
@@ -282,9 +295,10 @@ pub extern {
     /* from <git2/branch.h> */
     pub fn git_branch_name(out: **c_char, c_ref: *git_reference) -> c_int;
 
-    /* from <git2/tree.h> */
-    pub fn git_tree_free(tree: *git_tree) -> c_void;
-    pub fn git_tree_lookup(out: **git_tree, repo: *git_repository, id: *super::OID) -> c_int;
+    /* from <git2/object.h> */
+    pub fn git_object_free(object: *git_object) -> c_void;
+    pub fn git_object_lookup(out: &mut *git_object, repo: *git_repository, id: *super::OID,
+        otype: git_otype) -> c_int;
 
     /* from <git2/oid.h> */
     pub fn git_oid_fromstr(out: &mut super::OID, c_str: *c_char) -> c_int;
@@ -307,4 +321,16 @@ pub extern {
         update_ref: *c_char, author: &git_signature, committer: &git_signature,
         message_encoding: *c_char, message: *c_char, tree: *git_tree,
         parent_count: c_int, parents: *const *git_commit) -> c_int;
+}
+
+#[inline]
+pub unsafe fn git_tree_free(tree: *git_tree) -> c_void
+{
+    git_object_free(tree)
+}
+
+#[inline]
+pub unsafe fn git_tree_lookup(out: &mut *git_tree, repo: *git_repository, id: *super::OID) -> c_int
+{
+    git_object_lookup(out, repo, id, GIT_OBJ_TREE)
 }
