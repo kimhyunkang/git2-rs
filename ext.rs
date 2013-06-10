@@ -285,6 +285,8 @@ pub extern {
     pub fn git_index_write_tree(out: *super::OID, index: *git_index) -> c_int;
     pub fn git_index_add_bypath(index: *git_index, path: *c_char) -> c_int;
     pub fn git_index_remove_bypath(index: *git_index, path: *c_char) -> c_int;
+    pub fn git_index_read_tree(index: *git_index, tree: *git_tree) -> c_int;
+    pub fn git_index_clear(index: *git_index) -> c_void;
 
     /* from <git2/status.h> */
     pub fn git_status_foreach(repo: *git_repository, callback: callback_t,

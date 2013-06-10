@@ -58,6 +58,18 @@ impl GitIndex {
         }
     }
 
+    /// Read a tree into the index file with stats
+    ///
+    /// The current index contents will be replaced by the specified tree.
+    /// raises index_fail on error
+    pub fn read_tree(&mut self, tree: &Tree) {
+        unsafe {
+            if ext::git_index_read_tree(self.index, tree.tree) != 0 {
+                raise!(conditions::index_fail::cond);
+            }
+        }
+    }
+
     /// Write an existing index object from memory back to disk using an atomic file lock.
     ///
     /// raises index_fail on error
@@ -95,6 +107,15 @@ impl GitIndex {
             } else {
                 raise!(conditions::bad_tree::cond)
             }
+        }
+    }
+
+    /// Clear the contents (all the entries) of an index object.
+    /// This clears the index object in memory; changes must be manually
+    /// written to disk for them to take effect.
+    pub fn clear(&mut self) {
+        unsafe {
+            ext::git_index_clear(self.index);
         }
     }
 }
