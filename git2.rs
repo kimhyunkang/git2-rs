@@ -38,6 +38,11 @@ pub struct Tree {
     pub owner: @mut Repository,
 }
 
+pub struct TreeEntry {
+    pub tree_entry: *ext::git_tree_entry,
+    pub owned: bool,
+}
+
 pub struct Commit {
     pub commit: *ext::git_commit,
     pub owner: @mut Repository,
@@ -74,6 +79,31 @@ pub struct Status {
 
     pub ignored: bool,
 }
+
+/// Valid modes for index and tree entries.
+pub enum FileMode {
+	GIT_FILEMODE_NEW					= 0000000,
+	GIT_FILEMODE_TREE					= 0040000,
+	GIT_FILEMODE_BLOB					= 0100644,
+	GIT_FILEMODE_BLOB_EXECUTABLE		= 0100755,
+	GIT_FILEMODE_LINK					= 0120000,
+	GIT_FILEMODE_COMMIT					= 0160000,
+}
+
+/// Basic type (loose or packed) of any Git object.
+pub enum OType {
+	GIT_OBJ_ANY = -2,		// Object can be any of the following
+	GIT_OBJ_BAD = -1,		// Object is invalid.
+	GIT_OBJ__EXT1 = 0,		// Reserved for future use.
+	GIT_OBJ_COMMIT = 1,		// A commit object.
+	GIT_OBJ_TREE = 2,		// A tree (directory listing) object.
+	GIT_OBJ_BLOB = 3,		// A file revision object.
+	GIT_OBJ_TAG = 4,		// An annotated tag object.
+	GIT_OBJ__EXT2 = 5,		// Reserved for future use.
+	GIT_OBJ_OFS_DELTA = 6,  // A delta, base is given by an offset.
+	GIT_OBJ_REF_DELTA = 7,  // A delta, base is given by object id.
+}
+
 
 // FIXME: there should be better ways to do this...
 // if you call this library in multiple tasks,
