@@ -20,42 +20,42 @@ pub mod signature;
 pub mod oid;
 
 pub struct Repository {
-    pub repo: *ext::git_repository,
+    priv repo: *ext::git_repository,
 }
 
 pub struct Reference {
-    pub c_ref: *ext::git_reference,
-    pub repo_ptr: @mut Repository,
+    priv c_ref: *ext::git_reference,
+    priv repo_ptr: @mut Repository,
 }
 
 pub struct GitIndex {
-    pub index: *ext::git_index,
-    pub owner: @mut Repository,
+    priv index: *ext::git_index,
+    priv owner: @mut Repository,
 }
 
 pub struct Tree {
-    pub tree: *ext::git_tree,
-    pub owner: @mut Repository,
+    priv tree: *ext::git_tree,
+    priv owner: @mut Repository,
 }
 
 pub struct TreeEntry {
-    pub tree_entry: *ext::git_tree_entry,
-    pub owned: bool,
+    priv tree_entry: *ext::git_tree_entry,
+    priv owned: bool,
 }
 
 pub struct TreeBuilder {
-    pub bld: *ext::git_treebuilder,
+    priv bld: *ext::git_treebuilder,
 }
 
 pub struct Commit {
-    pub commit: *ext::git_commit,
-    pub owner: @mut Repository,
+    priv commit: *ext::git_commit,
+    priv owner: @mut Repository,
 }
 
 pub struct Signature {
-    pub name: ~str,
-    pub email: ~str,
-    pub when: std::time::Tm,
+    priv name: ~str,
+    priv email: ~str,
+    priv when: std::time::Tm,
 }
 
 pub struct OID {
