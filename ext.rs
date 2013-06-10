@@ -297,6 +297,7 @@ pub extern {
 
     /* from <git2/object.h> */
     pub fn git_object_free(object: *git_object) -> c_void;
+    pub fn git_object_id(obj: *git_object) -> *super::OID;
     pub fn git_object_lookup(out: &mut *git_object, repo: *git_repository, id: *super::OID,
         otype: git_otype) -> c_int;
 
@@ -305,10 +306,6 @@ pub extern {
     pub fn git_oid_fmt(out: *mut c_char, oid: &super::OID) -> c_int;
 
     /* from <git2/commit.h> */
-    pub fn git_commit_lookup(commit: &mut *git_commit, repo: *git_repository,
-        id: &super::OID) -> c_int;
-    pub fn git_commit_free(commit: *git_commit) -> c_void;
-    pub fn git_commit_id(commit: *git_commit) -> *super::OID;
     pub fn git_commit_message_encoding(commit: *git_commit) -> *c_char;
     pub fn git_commit_message(commit: *git_commit) -> *c_char;
     pub fn git_commit_committer(commit: *git_commit) -> *git_signature;
@@ -323,6 +320,27 @@ pub extern {
         parent_count: c_int, parents: *const *git_commit) -> c_int;
 }
 
+/* from <git2/commit.h> */
+#[inline]
+pub unsafe fn git_commit_lookup(commit: &mut *git_commit, repo: *git_repository,
+        id: &super::OID) -> c_int
+{
+	git_object_lookup(commit, repo, id, GIT_OBJ_COMMIT)
+}
+
+#[inline]
+pub unsafe fn git_commit_free(commit: *git_commit) -> c_void
+{
+    git_object_free(commit)
+}
+
+#[inline]
+pub unsafe fn git_commit_id(commit: *git_commit) -> *super::OID
+{
+    git_object_id(commit)
+}
+
+/* from <git2/tree.h> */
 #[inline]
 pub unsafe fn git_tree_free(tree: *git_tree) -> c_void
 {
