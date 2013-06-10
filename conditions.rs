@@ -22,6 +22,14 @@ condition! {
 }
 
 condition! {
+    bad_treeentry: (~str, super::git_error_t) -> ~super::TreeEntry;
+}
+
+condition! {
+    bad_treebuilder: (~str, super::git_error_t) -> super::TreeBuilder;
+}
+
+condition! {
     bad_oid: (~str, super::git_error_t) -> super::OID;
 }
 
@@ -43,4 +51,8 @@ condition! {
 
 condition! {
     commit_fail: (~str, super::git_error_t) -> ();
+}
+
+condition! {
+    iter_fail: (~str, super::git_error_t) -> ();
 }

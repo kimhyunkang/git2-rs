@@ -43,6 +43,10 @@ pub struct TreeEntry {
     pub owned: bool,
 }
 
+pub struct TreeBuilder {
+    pub bld: *ext::git_treebuilder,
+}
+
 pub struct Commit {
     pub commit: *ext::git_commit,
     pub owner: @mut Repository,

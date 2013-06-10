@@ -201,6 +201,12 @@ pub static GIT_STATUS_WT_TYPECHANGE:c_uint    = (1u << 10) as c_uint;
 
 pub static GIT_STATUS_IGNORED:c_uint          = (1u << 14) as c_uint;
 
+/* from <git2/tree.h> */
+pub enum git_treewalk_mode {
+	GIT_TREEWALK_PRE = 0, /* Pre-order */
+	GIT_TREEWALK_POST = 1, /* Post-order */
+}
+
 /* from <git2/types.h> */
 
 // the storage size of these types are unknown
@@ -208,6 +214,7 @@ pub type git_repository = c_void;
 pub type git_reference = c_void;
 pub type git_tree = c_void;
 pub type git_tree_entry = c_void;
+pub type git_treebuilder = c_void;
 pub type git_index = c_void;
 pub type git_commit = c_void;
 pub type git_object = c_void;
@@ -325,6 +332,20 @@ pub extern {
     pub fn git_tree_entry_type(entry: *git_tree_entry) -> super::OType;
     pub fn git_tree_entry_filemode(entry: *git_tree_entry) -> super::FileMode;
     pub fn git_tree_entry_cmp(e1: *git_tree_entry, e2: *git_tree_entry) -> c_int;
+    pub fn git_treebuilder_create(out: &mut *git_treebuilder, source: *git_tree) -> c_int;
+    pub fn git_treebuilder_clear(bld: *git_treebuilder) -> c_void;
+    pub fn git_treebuilder_entrycount(bld: *git_treebuilder) -> c_uint;
+    pub fn git_treebuilder_free(bld: *git_treebuilder) -> c_void;
+    pub fn git_treebuilder_get(bld: *git_treebuilder, filename: *c_char) -> *git_tree_entry;
+    pub fn git_treebuilder_insert(out: &mut *git_tree_entry, bld: *git_treebuilder,
+        filename: *c_char, id: &super::OID, filemode: super::FileMode) -> c_int;
+    pub fn git_treebuilder_remove(bld: *git_treebuilder, filename: *c_char) -> c_int;
+    pub fn git_treebuilder_filter(bld: *git_treebuilder, filter: callback_t,
+        payload: *c_void) -> c_void;
+    pub fn git_treebuilder_write(id: &mut super::OID, repo: *git_repository,
+        bld: *git_treebuilder) -> c_int;
+    pub fn git_tree_walk(tree: *git_tree, mode: git_treewalk_mode, callback: callback_t,
+        payload: *c_void) -> c_int;
 }
 
 /* from <git2/commit.h> */
