@@ -319,6 +319,9 @@ pub extern {
         update_ref: *c_char, author: &git_signature, committer: &git_signature,
         message_encoding: *c_char, message: *c_char, tree: *git_tree,
         parent_count: c_int, parents: *const *git_commit) -> c_int;
+
+    /* from <git2/tree.h> */
+    pub fn git_tree_id(tree: *git_tree) -> *super::OID;
 }
 
 /* from <git2/commit.h> */
