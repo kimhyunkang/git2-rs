@@ -84,6 +84,26 @@ pub struct Status {
     pub ignored: bool,
 }
 
+impl Status {
+    /// set every flags to false
+    pub fn new() -> Status {
+        Status {
+            index_new: false,
+            index_modified: false,
+            index_deleted: false,
+            index_renamed: false,
+            index_typechange: false,
+
+            wt_new: false,
+            wt_modified: false,
+            wt_deleted: false,
+            wt_typechange: false,
+
+            ignored: false,
+        }
+    }
+}
+
 /// Valid modes for index and tree entries.
 pub enum FileMode {
 	GIT_FILEMODE_NEW					= 0000000,
