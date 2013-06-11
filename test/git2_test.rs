@@ -1,21 +1,10 @@
 extern mod git2;
-use core::path::Path;
 
 #[test]
 fn test_head() {
     let repo = git2::repository::open("fixture");
     let head_id = repo.head().resolve();
     assert_eq!(head_id.to_str(), ~"21002f5d3f411fe990e13604273a51cd598a4a51")
-}
-
-#[test]
-fn test_path() {
-    let repo = git2::repository::open("fixture");
-
-    // submodule path
-    let expected = os::make_absolute(&Path("../.git/modules/test/fixture")).normalize();
-    let given = os::make_absolute(&Path(repo.path())).normalize();
-    assert_eq!(given, expected)
 }
 
 #[test]
