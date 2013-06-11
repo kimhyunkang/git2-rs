@@ -48,8 +48,8 @@ fn repo_lookup_commit() {
             fail!(~"commit does not exist")
         },
         Some(commit) => {
-            assert!(commit.parents().is_empty(), ~"the first commit should have no parents")
+            assert!(commit.parents().is_empty(), ~"the first commit should have no parents");
+            assert_eq!(commit.message(), ~"Create README.md");
         },
     }
-
 }
