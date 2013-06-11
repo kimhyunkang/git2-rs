@@ -38,3 +38,18 @@ fn repo_oid() {
     let oid = git2::oid::from_str(oid_str);
     assert_eq!(oid.to_str(), oid_str)
 }
+
+#[test]
+fn repo_lookup_commit() {
+    let repo = git2::repository::open("fixture");
+    let oid = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
+    match repo.lookup_commit(&oid) {
+        None => {
+            fail!(~"commit does not exist")
+        },
+        Some(commit) => {
+            assert!(commit.parents().is_empty(), ~"the first commit should have no parents")
+        },
+    }
+
+}
