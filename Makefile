@@ -4,12 +4,10 @@ lib: git2.rs repository.rs conditions.rs ext.rs index.rs reference.rs
 rgit: lib
 	cd sample; ${MAKE}
 
-test: git2_test
-	RUST_THREADS=1 ./git2_test
-
-git2_test: git2_test.rs lib
-	rustc --test $< -L .
+test: lib
+	cd test; ${MAKE}
 
 clean:
-	rm -rf git2_test *.dylib *.dSYM *.so *.o
+	rm -rf *.dylib *.dSYM *.so *.o
 	cd sample; ${MAKE} clean
+	cd test; ${MAKE} clean
