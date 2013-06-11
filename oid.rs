@@ -2,16 +2,20 @@ use core::libc::c_char;
 
 use super::OID;
 use ext;
+use conditions;
 use core::{from_str, to_str};
 
-fn from_str(s: &str) -> Option<OID> {
+fn from_str(s: &str) -> OID {
     unsafe {
         let mut oid = OID { id: [0, .. 20] };
         do str::as_c_str(s) |c_str| {
             if ext::git_oid_fromstr(&mut oid, c_str) == 0 {
-                Some(oid)
+                oid
             } else {
-                None
+                let err = ext::giterr_last();
+                let message = str::raw::from_c_str((*err).message);
+                let klass = (*err).klass;
+                conditions::bad_oid::cond.raise((message, klass))
             }
         }
     }
@@ -19,7 +23,16 @@ fn from_str(s: &str) -> Option<OID> {
 
 impl from_str::FromStr for OID {
     fn from_str(s: &str) -> Option<OID> {
-        from_str(s)
+        unsafe {
+            let mut oid = OID { id: [0, .. 20] };
+            do str::as_c_str(s) |c_str| {
+                if ext::git_oid_fromstr(&mut oid, c_str) == 0 {
+                    Some(oid)
+                } else {
+                    None
+                }
+            }
+        }
     }
 }
 

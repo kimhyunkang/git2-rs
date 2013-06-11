@@ -35,6 +35,6 @@ fn repo_bare() {
 #[test]
 fn repo_oid() {
     let oid_str = ~"93d8ad7e3f5a300d2b4e18e9f31247a95e5cc37f";
-    let oid = git2::oid::from_str(oid_str).get();
+    let oid = git2::oid::from_str(oid_str);
     assert_eq!(oid.to_str(), oid_str)
 }
