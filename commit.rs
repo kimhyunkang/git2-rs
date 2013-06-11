@@ -66,6 +66,7 @@ pub impl Commit {
         }
     }
 
+    /// Get the tree pointed to by a commit.
     fn tree(&self) -> ~Tree
     {
         unsafe {
@@ -78,6 +79,7 @@ pub impl Commit {
         }
     }
 
+    /// Get the parents of the commit.
     fn parents(&self) -> ~[~Commit]
     {
         unsafe {
@@ -99,6 +101,8 @@ pub impl Commit {
         }
     }
 
+    /// Get the oid of parents for the commit. This is different from
+    /// parents(&self), which will attempt to load the parent commit from the ODB.
     fn parents_oid(&self) -> ~[~OID]
     {
         unsafe {
