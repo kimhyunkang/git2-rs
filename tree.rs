@@ -241,10 +241,43 @@ impl Clone for TreeEntry {
     }
 }
 
+#[inline]
+fn tree_entry_cmp(a: &TreeEntry, b: &TreeEntry) -> c_int
+{
+    unsafe {
+        ext::git_tree_entry_cmp(a.tree_entry, b.tree_entry)
+    }
+}
+
+impl Eq for TreeEntry {
+    fn eq(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) == 0
+    }
+
+    fn ne(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) != 0
+    }
+}
+
+impl Ord for TreeEntry {
+    fn lt(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) < 0
+    }
+    fn le(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) <= 0
+    }
+    fn gt(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) > 0
+    }
+    fn ge(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) >= 0
+    }
+}
+
 impl TotalOrd for TreeEntry {
     fn cmp(&self, other: &TreeEntry) -> Ordering {
         unsafe {
-            let comp = ext::git_tree_entry_cmp(self.tree_entry, other.tree_entry);
+            let comp = tree_entry_cmp(self, other);
             if comp < 0 {
                 Less
             } else if comp == 0 {
