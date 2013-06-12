@@ -50,3 +50,57 @@ impl to_str::ToStr for OID {
         }
     }
 }
+
+/* from <git2/oid.h> */
+#[inline]
+priv fn git_oid_cmp(a: &OID, b: &OID) -> int {
+    let mut idx = 0u;
+    while idx < 20u {
+        if a.id[idx] != b.id[idx] {
+            return (a.id[idx] as int) - (b.id[idx] as int)
+        }
+        idx += 1;
+    }
+    return 0;
+}
+
+impl Eq for OID {
+    fn eq(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) == 0
+    }
+
+    fn ne(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) != 0
+    }
+}
+
+impl Ord for OID {
+    fn lt(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) < 0
+    }
+
+    fn le(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) <= 0
+    }
+
+    fn gt(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) > 0
+    }
+
+    fn ge(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) >= 0
+    }
+}
+
+impl TotalOrd for OID {
+    fn cmp(&self, other: &OID) -> Ordering {
+        let cmp = git_oid_cmp(self, other);
+        if cmp < 0 {
+            Less
+        } else if cmp == 0 {
+            Equal
+        } else {
+            Greater
+        }
+    }
+}
