@@ -1,3 +1,4 @@
+extern mod std;
 extern mod git2;
 
 #[test]
@@ -49,7 +50,35 @@ fn repo_lookup_commit() {
         },
         Some(commit) => {
             assert!(commit.parents().is_empty(), ~"the first commit should have no parents");
+        },
+    }
+}
+
+#[test]
+fn commit_apis() {
+    let repo = git2::repository::open("fixture");
+    let oid = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
+    let time_str = "Tue, 11 Jun 2013 19:14:48";
+    let rfc822z = "%a, %d %b %Y %T";
+    let tm = std::time::strptime(time_str, rfc822z).unwrap();
+    let signature = git2::Signature {
+        name: ~"김현강",
+        email: ~"kimhyunkang@gmail.com",
+        when: git2::Time {
+            time: tm.to_timespec().sec,
+            offset: 9 * 60,     // original time is +0900
+        }
+    };
+
+    match repo.lookup_commit(&oid) {
+        None => {
+            fail!(~"commit does not exist")
+        },
+        Some(commit) => {
             assert_eq!(commit.message(), ~"Create README.md");
+            assert_eq!(commit.id(), &oid);
+            assert_eq!(commit.author(), copy signature);
+            assert_eq!(commit.committer(), copy signature);
         },
     }
 }
