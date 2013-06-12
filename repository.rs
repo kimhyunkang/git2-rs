@@ -24,10 +24,9 @@ macro_rules! raise {
 pub fn open(path: &str) -> @mut Repository
 {
     unsafe {
-        let ptr_to_repo: *ext::git_repository = ptr::null();
-        let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
+        let mut ptr_to_repo: *ext::git_repository = ptr::null();
         do str::as_c_str(path) |c_path| {
-            if ext::git_repository_open(ptr2, c_path) == 0 {
+            if ext::git_repository_open(&mut ptr_to_repo, c_path) == 0 {
                 @mut Repository { repo: ptr_to_repo }
             } else {
                 raise!(conditions::bad_repo::cond)
@@ -44,10 +43,9 @@ pub fn open(path: &str) -> @mut Repository
 pub fn init(path: &str, is_bare: bool) -> @mut Repository
 {
     unsafe {
-        let ptr_to_repo: *ext::git_repository = ptr::null();
-        let ptr2 = ptr::to_unsafe_ptr(&ptr_to_repo);
+        let mut ptr_to_repo: *ext::git_repository = ptr::null();
         do str::as_c_str(path) |c_path| {
-            if ext::git_repository_init(ptr2, c_path, is_bare as c_uint) == 0 {
+            if ext::git_repository_init(&mut ptr_to_repo, c_path, is_bare as c_uint) == 0 {
                 @mut Repository { repo: ptr_to_repo }
             } else {
                 raise!(conditions::bad_repo::cond)
@@ -94,11 +92,10 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str) -> ~str
 /// this function do not receive options for now
 pub fn clone(url: &str, local_path: &str) -> @mut Repository {
     unsafe {
-        let ptr_to_repo: *ext::git_repository = ptr::null();
-        let pptr = ptr::to_unsafe_ptr(&ptr_to_repo);
+        let mut ptr_to_repo: *ext::git_repository = ptr::null();
         do str::as_c_str(url) |c_url| {
             do str::as_c_str(local_path) |c_path| {
-                if ext::git_clone(pptr, c_url, c_path, ptr::null()) == 0 {
+                if ext::git_clone(&mut ptr_to_repo, c_url, c_path, ptr::null()) == 0 {
                     @mut Repository { repo: ptr_to_repo }
                 } else {
                     raise!(conditions::bad_repo::cond)
@@ -137,10 +134,9 @@ pub impl Repository {
     /// Retrieve and resolve the reference pointed at by HEAD.
     fn head(@mut self) -> ~Reference {
         unsafe {
-            let ptr_to_ref: *ext::git_reference = ptr::null();
-            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+            let mut ptr_to_ref: *ext::git_reference = ptr::null();
 
-            if(ext::git_repository_head(pptr, self.repo) == 0) {
+            if(ext::git_repository_head(&mut ptr_to_ref, self.repo) == 0) {
                 ~Reference { c_ref: ptr_to_ref, repo_ptr: self }
             } else {
                 raise!(conditions::bad_ref::cond)
@@ -152,11 +148,10 @@ pub impl Repository {
     /// The name will be checked for validity.
     fn lookup(@mut self, name: &str) -> Option<~Reference> {
         unsafe {
-            let ptr_to_ref: *ext::git_reference = ptr::null();
-            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+            let mut ptr_to_ref: *ext::git_reference = ptr::null();
 
             do str::as_c_str(name) |c_name| {
-                if(ext::git_reference_lookup(pptr, self.repo, c_name) == 0) {
+                if(ext::git_reference_lookup(&mut ptr_to_ref, self.repo, c_name) == 0) {
                     Some( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
                 } else {
                     None
@@ -196,10 +191,9 @@ pub impl Repository {
     /// located in `.git/index`).
     fn index(@mut self) -> ~GitIndex {
         unsafe {
-            let ptr_to_ref: *ext::git_index = ptr::null();
-            let pptr = ptr::to_unsafe_ptr(&ptr_to_ref);
+            let mut ptr_to_ref: *ext::git_index = ptr::null();
 
-            if ext::git_repository_index(pptr, self.repo) == 0 {
+            if ext::git_repository_index(&mut ptr_to_ref, self.repo) == 0 {
                 ~GitIndex { index: ptr_to_ref, owner: self }
             } else {
                 raise!(conditions::bad_index::cond)

@@ -95,11 +95,10 @@ impl GitIndex {
     /// The index must not contain any file in conflict.
     pub fn write_tree(&self) -> ~Tree {
         unsafe {
-            let oid = OID { id: [0, .. 20] };
-            let oid_ptr = ptr::to_unsafe_ptr(&oid);
-            if ext::git_index_write_tree(oid_ptr, self.index) == 0 {
+            let mut oid = OID { id: [0, .. 20] };
+            if ext::git_index_write_tree(&mut oid, self.index) == 0 {
                 let mut ptr_to_tree: *ext::git_tree = ptr::null();
-                if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, oid_ptr) == 0 {
+                if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, &oid) == 0 {
                     ~Tree { tree: ptr_to_tree, owner: self.owner }
                 } else {
                     raise!(conditions::bad_tree::cond)

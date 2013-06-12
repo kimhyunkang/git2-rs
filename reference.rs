@@ -24,9 +24,8 @@ pub impl Reference {
     ///
     fn branch_name(&self) -> Option<~str> {
         unsafe {
-            let ptr_to_name: *c_char = ptr::null();
-            let pptr = ptr::to_unsafe_ptr(&ptr_to_name);
-            if ext::git_branch_name(pptr, self.c_ref) == 0 {
+            let mut ptr_to_name: *c_char = ptr::null();
+            if ext::git_branch_name(&mut ptr_to_name, self.c_ref) == 0 {
                 Some(str::raw::from_c_str(ptr_to_name))
             } else {
                 None

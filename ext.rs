@@ -248,22 +248,22 @@ pub extern {
     pub fn giterr_last() -> *git_error;
 
     /* from <git2/repository.h> */
-    pub fn git_repository_open(out: **git_repository, path: *c_char) -> c_int;
+    pub fn git_repository_open(out: &mut *git_repository, path: *c_char) -> c_int;
     pub fn git_repository_free(repo: *git_repository) -> c_void;
     pub fn git_repository_discover(path_out: *mut c_char, path_size: size_t,
                             start_path: *c_char, across_fs: c_int,
                             ceiling_dirs: *c_char) -> c_int;
     pub fn git_repository_path(repo: *git_repository) -> *c_char;
     pub fn git_repository_workdir(repo: *git_repository) -> *c_char;
-    pub fn git_repository_init(out: **git_repository, path: *c_char, is_bare: c_uint) -> c_int;
-    pub fn git_repository_head(out: **git_reference, repo: *git_repository) -> c_int;
+    pub fn git_repository_init(out: &mut *git_repository, path: *c_char, is_bare: c_uint) -> c_int;
+    pub fn git_repository_head(out: &mut *git_reference, repo: *git_repository) -> c_int;
     pub fn git_repository_is_empty(repo: *git_repository) -> c_int;
     pub fn git_repository_is_bare(repo: *git_repository) -> c_int;
-    pub fn git_repository_index(out: **git_index, repo: *git_repository) -> c_int;
+    pub fn git_repository_index(out: &mut *git_index, repo: *git_repository) -> c_int;
 
     /* from <git2/refs.h> */
     pub fn git_reference_free(c_ref: *git_reference) -> c_void;
-    pub fn git_reference_lookup(out: **git_reference, repo: *git_repository,
+    pub fn git_reference_lookup(out: &mut *git_reference, repo: *git_repository,
                                 name: *c_char) -> c_int;
     pub fn git_reference_resolve(out: &mut *git_reference, c_ref: *git_reference) -> c_int;
     pub fn git_reference_target(c_ref: *git_reference) -> *super::OID;
@@ -273,7 +273,7 @@ pub extern {
     pub fn git_threads_shutdown() -> c_void;
 
     /* from <git2/clone.h> */
-    pub fn git_clone(out: **git_repository, url: *c_char, local_path: *c_char,
+    pub fn git_clone(out: &mut *git_repository, url: *c_char, local_path: *c_char,
                     options: *git_clone_options) -> c_int;
 
     /* from <git2/checkout.h> */
@@ -282,7 +282,7 @@ pub extern {
     /* from <git2/index.h> */
     pub fn git_index_free(index: *git_index) -> c_void;
     pub fn git_index_write(index: *git_index) -> c_int;
-    pub fn git_index_write_tree(out: *super::OID, index: *git_index) -> c_int;
+    pub fn git_index_write_tree(out: &mut super::OID, index: *git_index) -> c_int;
     pub fn git_index_add_bypath(index: *git_index, path: *c_char) -> c_int;
     pub fn git_index_remove_bypath(index: *git_index, path: *c_char) -> c_int;
     pub fn git_index_read_tree(index: *git_index, tree: *git_tree) -> c_int;
@@ -293,12 +293,12 @@ pub extern {
                                 payload: *c_void) -> c_int;
 
     /* from <git2/branch.h> */
-    pub fn git_branch_name(out: **c_char, c_ref: *git_reference) -> c_int;
+    pub fn git_branch_name(out: &mut *c_char, c_ref: *git_reference) -> c_int;
 
     /* from <git2/object.h> */
     pub fn git_object_free(object: *git_object) -> c_void;
     pub fn git_object_id(obj: *git_object) -> *super::OID;
-    pub fn git_object_lookup(out: &mut *git_object, repo: *git_repository, id: *super::OID,
+    pub fn git_object_lookup(out: &mut *git_object, repo: *git_repository, id: &super::OID,
         otype: super::OType) -> c_int;
 
     /* from <git2/oid.h> */
@@ -378,7 +378,7 @@ pub unsafe fn git_tree_free(tree: *git_tree) -> c_void
 }
 
 #[inline]
-pub unsafe fn git_tree_lookup(out: &mut *git_tree, repo: *git_repository, id: *super::OID) -> c_int
+pub unsafe fn git_tree_lookup(out: &mut *git_tree, repo: *git_repository, id: &super::OID) -> c_int
 {
     git_object_lookup(out, repo, id, super::GIT_OBJ_TREE)
 }
