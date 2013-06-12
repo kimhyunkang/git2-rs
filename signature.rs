@@ -1,18 +1,17 @@
-extern mod std;
+use core::libc::c_int;
 
 use ext;
-use super::Signature;
+use super::{Signature, Time};
 
 pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
-    let ts = sig.when.to_timespec();
     do str::as_c_str(sig.name) |c_name| {
         do str::as_c_str(sig.email) |c_email| {
             ext::git_signature {
                 name: c_name,
                 email: c_email,
                 when: ext::git_time {
-                    time: ts.sec,
-                    offset: sig.when.tm_gmtoff / 60,
+                    time: sig.when.time,
+                    offset: sig.when.offset as c_int,
                 }
             }
         }
@@ -20,12 +19,57 @@ pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
 }
 
 pub unsafe fn from_c_sig(c_sig: *ext::git_signature) -> Signature {
-    let spec = std::time::Timespec::new((*c_sig).when.time, 0);
-    let mut tm = std::time::at_utc(spec);
-    tm.tm_gmtoff = (*c_sig).when.offset * 60;
     Signature {
         name: str::raw::from_c_str((*c_sig).name),
         email: str::raw::from_c_str((*c_sig).email),
-        when: tm,
+        when: Time { time: (*c_sig).when.time, offset: (*c_sig).when.offset as int }
+    }
+}
+
+#[inline]
+fn time_cmp(a: &Time, b: &Time) -> i64 {
+    let a_utc = a.time + (a.offset as i64) * 60;
+    let b_utc = b.time + (b.offset as i64) * 60;
+    return a_utc - b_utc;
+}
+
+impl Eq for Time {
+    fn eq(&self, other: &Time) -> bool {
+        time_cmp(self, other) == 0
+    }
+
+    fn ne(&self, other: &Time) -> bool {
+        time_cmp(self, other) != 0
+    }
+}
+
+impl Ord for Time {
+    fn lt(&self, other: &Time) -> bool {
+        time_cmp(self, other) < 0
+    }
+
+    fn le(&self, other: &Time) -> bool {
+        time_cmp(self, other) <= 0
+    }
+
+    fn gt(&self, other: &Time) -> bool {
+        time_cmp(self, other) > 0
+    }
+
+    fn ge(&self, other: &Time) -> bool {
+        time_cmp(self, other) >= 0
+    }
+}
+
+impl TotalOrd for Time {
+    fn cmp(&self, other: &Time) -> Ordering {
+        let res = time_cmp(self, other);
+        if res < 0 {
+            Less
+        } else if res == 0 {
+            Equal
+        } else {
+            Greater
+        }
     }
 }

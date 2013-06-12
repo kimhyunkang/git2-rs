@@ -7,8 +7,6 @@
 
 #[crate_type = "lib"];
 
-extern mod std;
-
 pub mod ext;
 pub mod conditions;
 pub mod repository;
@@ -52,10 +50,16 @@ pub struct Commit {
     priv owner: @mut Repository,
 }
 
+pub struct Time {
+    pub time: i64,      /* time in seconds from epoch */
+    pub offset: int,    /* timezone offset, in minutes */
+}
+
+#[deriving(Eq)]
 pub struct Signature {
-    priv name: ~str,
-    priv email: ~str,
-    priv when: std::time::Tm,
+    pub name: ~str,
+    pub email: ~str,
+    pub when: Time,
 }
 
 pub struct OID {
