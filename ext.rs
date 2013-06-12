@@ -249,6 +249,7 @@ pub extern {
 
     /* from <git2/repository.h> */
     pub fn git_repository_open(out: &mut *git_repository, path: *c_char) -> c_int;
+    pub fn git_repository_open_bare(out: &mut *git_repository, path: *c_char) -> c_int;
     pub fn git_repository_free(repo: *git_repository) -> c_void;
     pub fn git_repository_discover(path_out: *mut c_char, path_size: size_t,
                             start_path: *c_char, across_fs: c_int,
