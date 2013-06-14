@@ -1,35 +1,9 @@
 use core::libc::{c_char, c_void, c_int, c_uint, size_t};
 
-/** Error classes */
-pub enum git_error_t {
-    GITERR_NOMEMORY,
-    GITERR_OS,
-    GITERR_INVALID,
-    GITERR_REFERENCE,
-    GITERR_ZLIB,
-    GITERR_REPOSITORY,
-    GITERR_CONFIG,
-    GITERR_REGEX,
-    GITERR_ODB,
-    GITERR_INDEX,
-    GITERR_OBJECT,
-    GITERR_NET,
-    GITERR_TAG,
-    GITERR_TREE,
-    GITERR_INDEXER,
-    GITERR_SSL,
-    GITERR_SUBMODULE,
-    GITERR_THREAD,
-    GITERR_STASH,
-    GITERR_CHECKOUT,
-    GITERR_FETCHHEAD,
-    GITERR_MERGE,
-}
-
 /* from <git2/errors.h> */
 pub struct git_error {
     pub message: *c_char,
-    pub klass: git_error_t,
+    pub klass: super::GitError,
 }
 
 /* from <git2/errors.h> */

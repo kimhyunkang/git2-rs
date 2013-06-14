@@ -17,6 +17,32 @@ pub mod commit;
 pub mod signature;
 pub mod oid;
 
+/** Error classes */
+pub enum GitError {
+    GITERR_NOMEMORY,
+    GITERR_OS,
+    GITERR_INVALID,
+    GITERR_REFERENCE,
+    GITERR_ZLIB,
+    GITERR_REPOSITORY,
+    GITERR_CONFIG,
+    GITERR_REGEX,
+    GITERR_ODB,
+    GITERR_INDEX,
+    GITERR_OBJECT,
+    GITERR_NET,
+    GITERR_TAG,
+    GITERR_TREE,
+    GITERR_INDEXER,
+    GITERR_SSL,
+    GITERR_SUBMODULE,
+    GITERR_THREAD,
+    GITERR_STASH,
+    GITERR_CHECKOUT,
+    GITERR_FETCHHEAD,
+    GITERR_MERGE,
+}
+
 pub struct Repository {
     priv repo: *ext::git_repository,
 }
