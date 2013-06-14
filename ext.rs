@@ -191,6 +191,7 @@ pub type git_tree_entry = c_void;
 pub type git_treebuilder = c_void;
 pub type git_index = c_void;
 pub type git_commit = c_void;
+pub type git_blob = c_void;
 pub type git_object = c_void;
 
 #[cfg(target_os = "android")]
@@ -201,6 +202,8 @@ pub type git_time_t = i64;
 
 #[cfg(target_os = "win32")]
 pub type git_time_t = core::libc::types::os::arch::extra::time64_t;
+
+pub type git_off_t = i64;
 
 pub struct git_time {
     time: git_time_t,
@@ -323,6 +326,22 @@ pub extern {
         bld: *git_treebuilder) -> c_int;
     pub fn git_tree_walk(tree: *git_tree, mode: git_treewalk_mode, callback: callback_t,
         payload: *c_void) -> c_int;
+
+    /* from <git2/blob.h> */
+    pub fn git_blob_lookup(blob: &mut *git_blob, repo: *git_repository, id: &super::OID) -> c_int;
+    pub fn git_blob_free(blob: *git_blob) -> c_void;
+    pub fn git_blob_id(blob: *git_blob) -> &super::OID;
+    pub fn git_blob_rawcontent(blob: *git_blob) -> *c_void;
+    pub fn git_blob_rawsize(blob: *git_blob) -> git_off_t;
+    pub fn git_blob_create_fromworkdir(id: &mut super::OID, repo: *git_repository,
+        relative_path: *c_char) -> c_int;
+    pub fn git_blob_create_fromdisk(id: &mut super::OID, repo: *git_repository,
+        path: *c_char) -> c_int;
+    pub fn git_blob_create_fromchunks(id: &mut super::OID, repo: *git_repository,
+        hintpath: *c_char, callback: callback_t, payload: *c_void) -> c_int;
+    pub fn git_blob_create_frombuffer(oid: &mut super::OID, repo: *git_repository,
+        buffer: *c_void, len: size_t) -> c_int;
+    pub fn git_blob_is_binary(blob: *git_blob) -> c_int;
 }
 
 /* from <git2/commit.h> */

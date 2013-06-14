@@ -287,6 +287,107 @@ pub impl Repository {
         status_list
     }
 
+    /// Lookup a blob object from a repository.
+    fn blob_lookup(@mut self, id: &OID) -> Option<~Blob>
+    {
+        let mut ptr: *ext::git_blob = ptr::null();
+        unsafe {
+            if ext::git_blob_lookup(&mut ptr, self.repo, id) == 0 {
+                Some( ~Blob { blob: ptr, owner: self } )
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Read a file from the working folder of a repository
+    /// and write it to the Object Database as a loose blob
+    fn blob_create_fromworkdir(@mut self, relative_path: &str) -> ~Blob
+    {
+        let mut oid = OID { id: [0, ..20] };
+        let mut ptr: *ext::git_blob = ptr::null();
+        do str::as_c_str(relative_path) |c_path| {
+            unsafe {
+                if ext::git_blob_create_fromworkdir(&mut oid, self.repo, c_path) == 0 {
+                    if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
+                        fail!(~"blob lookup failure");
+                    }
+                    ~Blob { blob: ptr, owner: self }
+                } else {
+                    raise!(conditions::bad_blob::cond)
+                }
+            }
+        }
+    }
+
+    /// Read a file from the filesystem and write its content
+    /// to the Object Database as a loose blob
+    fn blob_create_fromdisk(@mut self, relative_path: &str) -> ~Blob
+    {
+        let mut oid = OID { id: [0, ..20] };
+        let mut ptr: *ext::git_blob = ptr::null();
+        do str::as_c_str(relative_path) |c_path| {
+            unsafe {
+                if ext::git_blob_create_fromdisk(&mut oid, self.repo, c_path) == 0 {
+                    if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
+                        fail!(~"blob lookup failure");
+                    }
+                    ~Blob { blob: ptr, owner: self }
+                } else {
+                    raise!(conditions::bad_blob::cond)
+                }
+            }
+        }
+    }
+
+    /// Write a loose blob to the Object Database from a
+    /// provider of chunks of data.
+    ///
+    /// Provided the `hintpath` parameter is not None, its value
+    /// will help to determine what git filters should be applied
+    /// to the object before it can be placed to the object database.
+    fn blob_create_fromreader(@mut self, reader: &io::Reader, hintpath: Option<&str>) -> ~Blob
+    {
+        let mut oid = OID { id: [0, ..20] };
+        unsafe {
+            let c_path =
+            match hintpath {
+                None => ptr::null(),
+                Some(pathref) => str::as_c_str(pathref, |ptr| {ptr}),
+            };
+            let payload: *c_void = cast::transmute(&reader);
+            if (ext::git_blob_create_fromchunks(&mut oid, self.repo, c_path, git_blob_chunk_cb,
+                    payload) == 0) {
+                let mut ptr: *ext::git_blob = ptr::null();
+                if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
+                    fail!(~"blob lookup failure");
+                }
+                ~Blob { blob: ptr, owner: self }
+            } else {
+                raise!(conditions::bad_blob::cond)
+            }
+        }
+    }
+
+    fn blob_create_frombuffer(@mut self, buffer: &[u8]) -> ~Blob
+    {
+        let mut oid = OID { id: [0, ..20] };
+        do vec::as_imm_buf(buffer) |v, len| {
+            unsafe {
+                let buf:*c_void = cast::transmute(v);
+                if ext::git_blob_create_frombuffer(&mut oid, self.repo, buf, len as u64) == 0 {
+                    let mut ptr: *ext::git_blob = ptr::null();
+                    if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
+                        fail!(~"blob lookup failure");
+                    }
+                    ~Blob { blob: ptr, owner: self }
+                } else {
+                    raise!(conditions::bad_blob::cond)
+                }
+            }
+        }
+    }
+
     /// Create new commit in the repository from a list of Commit pointers
     ///
     /// Returns the created commit. The commit will be written to the Object Database and
@@ -362,6 +463,21 @@ extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -
             0
         } else {
             1
+        }
+    }
+}
+
+extern fn git_blob_chunk_cb(content: *mut u8, max_length: size_t, payload: *&io::Reader) -> c_int
+{
+    let len = max_length as uint;
+    unsafe {
+        let reader = *payload;
+        do vec::raw::mut_buf_as_slice(content, len) |v| {
+            if reader.eof() {
+                0
+            } else {
+                reader.read(v, len) as c_int
+            }
         }
     }
 }

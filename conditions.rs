@@ -37,6 +37,10 @@ condition! {
 }
 
 condition! {
+    bad_blob: (~str, super::GitError) -> ~super::Blob;
+}
+
+condition! {
     check_fail: (~str, super::GitError) -> bool;
 }
 

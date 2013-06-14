@@ -13,6 +13,7 @@ pub mod repository;
 pub mod reference;
 pub mod index;
 pub mod tree;
+pub mod blob;
 pub mod commit;
 pub mod signature;
 pub mod oid;
@@ -69,6 +70,11 @@ pub struct TreeEntry {
 
 pub struct TreeBuilder {
     priv bld: *ext::git_treebuilder,
+}
+
+pub struct Blob {
+    priv blob: *ext::git_blob,
+    priv owner: @mut Repository,
 }
 
 pub struct Commit {
