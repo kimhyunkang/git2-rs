@@ -369,6 +369,7 @@ pub impl Repository {
         }
     }
 
+    /// Write an in-memory buffer to the ODB as a blob
     fn blob_create_frombuffer(@mut self, buffer: &[u8]) -> ~Blob
     {
         let mut oid = OID { id: [0, ..20] };
