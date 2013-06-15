@@ -151,12 +151,12 @@ impl Status {
 
 /// Valid modes for index and tree entries.
 pub enum FileMode {
-	GIT_FILEMODE_NEW					= 0000000,
-	GIT_FILEMODE_TREE					= 0040000,
-	GIT_FILEMODE_BLOB					= 0100644,
-	GIT_FILEMODE_BLOB_EXECUTABLE		= 0100755,
-	GIT_FILEMODE_LINK					= 0120000,
-	GIT_FILEMODE_COMMIT					= 0160000,
+	GIT_FILEMODE_NEW					= 0x0000,   // 0000000
+	GIT_FILEMODE_TREE					= 0x4000,   // 0040000
+	GIT_FILEMODE_BLOB					= 0x81a4,   // 0100644
+	GIT_FILEMODE_BLOB_EXECUTABLE		= 0x81ed,   // 0100755
+	GIT_FILEMODE_LINK					= 0xa000,   // 0120000
+	GIT_FILEMODE_COMMIT					= 0xe000,   // 0160000
 }
 
 /// Basic type (loose or packed) of any Git object.
