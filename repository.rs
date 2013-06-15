@@ -182,6 +182,18 @@ pub impl Repository {
         }
     }
 
+    /// Lookup a tree object from repository
+    fn lookup_tree(@mut self, id: &OID) -> Option<~Tree> {
+        unsafe {
+            let mut tree: *ext::git_tree = ptr::null();
+            if ext::git_tree_lookup(&mut tree, self.repo, id) == 0 {
+                Some( ~Tree { tree: tree, owner: self } )
+            } else {
+                None
+            }
+        }
+    }
+
     /// Updates files in the index and the working tree to match the content of
     /// the commit pointed at by HEAD.
     /// This function does not accept options for now
