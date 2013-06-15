@@ -116,7 +116,7 @@ fn commit() {
     };
 
     let message = ~"commit test";
-    let oid = repo.commit(Some(&"master"), &sig, &sig, None, message, tree, ~[parent]);
+    let oid = repo.commit(None, &sig, &sig, None, message, tree, ~[parent]);
     match repo.lookup_commit(&oid) {
         None => fail!(~"failed to create commit"),
         Some(new_commit) => {
