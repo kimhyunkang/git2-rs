@@ -3,15 +3,6 @@ use super::*;
 use conditions;
 use ext;
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 pub impl Tree {
     /// Get the id of a tree.
     fn id(&self) -> &'self OID

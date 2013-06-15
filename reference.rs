@@ -3,15 +3,6 @@ use super::{Reference, OID};
 use ext;
 use conditions;
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 pub impl Reference {
     ///
     /// Return the name of the given local or remote branch.

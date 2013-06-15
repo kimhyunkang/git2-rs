@@ -6,15 +6,6 @@ use super::*;
 
 static PATH_BUF_SZ: uint = 1024u;
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 /// Open a git repository.
 ///
 /// The 'path' argument must point to either a git repository folder, or an existing work dir.

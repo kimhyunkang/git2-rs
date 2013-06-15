@@ -7,6 +7,15 @@
 
 #[crate_type = "lib"];
 
+macro_rules! raise {
+    ($cond_expr:expr) => ({
+        let err = ext::giterr_last();
+        let message = str::raw::from_c_str((*err).message);
+        let klass = (*err).klass;
+        $cond_expr.raise((message, klass))
+    })
+}
+
 pub mod ext;
 pub mod conditions;
 pub mod repository;

@@ -3,15 +3,6 @@ use ext;
 
 use conditions;
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 impl GitIndex {
     /// Add or update an index entry from a file on disk
     ///

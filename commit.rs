@@ -4,15 +4,6 @@ use ext;
 use signature;
 use super::{Commit, Signature, OID, Tree};
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 pub impl Commit {
     /// get the id of the commit
     fn id(&self) -> &'self OID
