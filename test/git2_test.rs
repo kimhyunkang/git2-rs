@@ -82,3 +82,45 @@ fn commit_apis() {
         },
     }
 }
+
+#[test]
+fn commit() {
+    let repo = git2::repository::open("fixture");
+    let parent_id = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
+    let parent = match repo.lookup_commit(&parent_id) {
+        None => fail!(~"commit does not exist"),
+        Some(c) => c,
+    };
+
+    let time_str = "Sat, 15 Jun 2013 03:40:22";
+    let rfc822z = "%a, %d %b %Y %T";
+    let tm = std::time::strptime(time_str, rfc822z).unwrap();
+    let sig = git2::Signature {
+        name: ~"김현강",
+        email: ~"kimhyunkang@gmail.com",
+        when: git2::Time {
+            time: tm.to_timespec().sec,
+            offset: 9 * 60,     // original time is +0900
+        }
+    };
+
+    let text = "blob text\n";
+    let blob = repo.blob_create_frombuffer(str::as_bytes_slice(text));
+
+    let mut treebuilder = git2::TreeBuilder::from_tree(parent.tree());
+    treebuilder.insert(&"test_blob.txt", blob.id(), git2::GIT_FILEMODE_BLOB);
+    let tree_id = treebuilder.write(repo);
+    let tree = match repo.lookup_tree(&tree_id) {
+        None => fail!(~"tree does not exist"),
+        Some(t) => t,
+    };
+
+    let message = ~"commit test";
+    let oid = repo.commit(Some(&"master"), &sig, &sig, None, message, tree, ~[parent]);
+    match repo.lookup_commit(&oid) {
+        None => fail!(~"failed to create commit"),
+        Some(new_commit) => {
+            assert_eq!(new_commit.message(), message)
+        }
+    };
+}
