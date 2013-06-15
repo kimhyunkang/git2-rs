@@ -447,7 +447,7 @@ pub impl Repository {
                 let res = ext::git_commit_create(&mut oid, self.repo, c_ref,
                             &c_author, &c_committer, c_encoding, c_message, tree.tree,
                             len as c_int, parent_ptr);
-                if res != 0 {
+                if res == 0 {
                     oid
                 } else {
                     raise!(conditions::bad_oid::cond)
