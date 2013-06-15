@@ -81,6 +81,38 @@ pub struct TreeBuilder {
     priv bld: *ext::git_treebuilder,
 }
 
+impl TreeBuilder {
+    /// Create a new tree builder.
+    /// The tree builder can be used to create or modify trees in memory and
+    /// write them as tree objects to the database.
+    /// The tree builder will start with no entries and will have to be filled manually.
+    pub fn new() -> TreeBuilder
+    {
+        let mut bld:*ext::git_treebuilder = ptr::null();
+        unsafe {
+            if ext::git_treebuilder_create(&mut bld, ptr::null()) == 0 {
+                TreeBuilder { bld: bld }
+            } else {
+                raise!(conditions::bad_treebuilder::cond)
+            }
+        }
+    }
+
+    /// Create a new tree builder.
+    /// The tree builder will be initialized with the entries of the given tree.
+    pub fn from_tree(tree: &Tree) -> TreeBuilder
+    {
+        let mut bld:*ext::git_treebuilder = ptr::null();
+        unsafe {
+            if ext::git_treebuilder_create(&mut bld, tree.tree) == 0 {
+                TreeBuilder { bld: bld }
+            } else {
+                raise!(conditions::bad_treebuilder::cond)
+            }
+        }
+    }
+}
+
 pub struct Blob {
     priv blob: *ext::git_blob,
     priv owner: @mut Repository,

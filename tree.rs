@@ -280,37 +280,7 @@ impl TotalOrd for TreeEntry {
     }
 }
 
-pub impl super::TreeBuilder {
-    /// Create a new tree builder.
-    /// The tree builder can be used to create or modify trees in memory and
-    /// write them as tree objects to the database.
-    /// The tree builder will start with no entries and will have to be filled manually.
-    fn new() -> TreeBuilder
-    {
-        let mut bld:*ext::git_treebuilder = ptr::null();
-        unsafe {
-            if ext::git_treebuilder_create(&mut bld, ptr::null()) == 0 {
-                super::TreeBuilder { bld: bld }
-            } else {
-                raise!(conditions::bad_treebuilder::cond)
-            }
-        }
-    }
-
-    /// Create a new tree builder.
-    /// The tree builder will be initialized with the entries of the given tree.
-    fn from_tree(tree: &Tree) -> TreeBuilder
-    {
-        let mut bld:*ext::git_treebuilder = ptr::null();
-        unsafe {
-            if ext::git_treebuilder_create(&mut bld, tree.tree) == 0 {
-                super::TreeBuilder { bld: bld }
-            } else {
-                raise!(conditions::bad_treebuilder::cond)
-            }
-        }
-    }
-
+pub impl TreeBuilder {
     /// Clear all the entires in the builder
     fn clear(&mut self)
     {
