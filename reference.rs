@@ -1,6 +1,15 @@
-use core::libc::c_char;
+use core::libc::{c_char, c_int};
 use super::{Reference, OID, raise};
 use ext;
+
+/// Delete the branch reference.
+pub fn branch_delete(reference: ~Reference) {
+    unsafe {
+        if ext::git_branch_delete(reference.c_ref) != 0 {
+            raise();
+        }
+    }
+}
 
 pub impl Reference {
     ///
@@ -19,6 +28,72 @@ pub impl Reference {
                 Some(str::raw::from_c_str(ptr_to_name))
             } else {
                 None
+            }
+        }
+    }
+
+    /// Determine if the current local branch is pointed at by HEAD.
+    fn is_head(&self) -> bool {
+        unsafe {
+            match ext::git_branch_is_head(self.c_ref) {
+                1 => true,
+                0 => false,
+                _ => { raise(); false },
+            }
+        }
+    }
+
+    /// Move/rename an existing local branch reference.
+    ///
+    /// The new branch name will be checked for validity.
+    /// See `git_tag_create()` for rules about valid names.
+    fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<~Reference>
+    {
+        let mut ptr: *ext::git_reference = ptr::null();
+        let flag = force as c_int;
+        unsafe {
+            do str::as_c_str(new_branch_name) |c_name| {
+                let res = ext::git_branch_move(&mut ptr, self.c_ref, c_name, flag);
+                match res {
+                    0 => Some( ~Reference { c_ref: ptr, repo_ptr: self.repo_ptr } ),
+                    ext::GIT_EINVALIDSPEC => None,
+                    _ => { raise(); None },
+                }
+            }
+        }
+    }
+
+    /// Return the reference supporting the remote tracking branch,
+    /// returns None when the upstream is not found
+    fn upstream(&self) -> Option<~Reference>
+    {
+        let mut ptr: *ext::git_reference = ptr::null();
+        unsafe {
+            let res = ext::git_branch_upstream(&mut ptr, self.c_ref);
+            match res {
+                0 => Some( ~Reference { c_ref: ptr, repo_ptr: self.repo_ptr } ),
+                ext::GIT_ENOTFOUND => None,
+                _ => { raise(); None },
+            }
+        }
+    }
+
+    /// Set the upstream configuration for a given local branch
+    /// upstream_name: remote-tracking or local branch to set as
+    ///     upstream. Pass None to unset.
+    fn set_upstream(&mut self, upstream_name: Option<&str>)
+    {
+        let c_name =
+        match upstream_name {
+            None => ptr::null(),
+            Some(nameref) => str::as_c_str(nameref, |ptr| {ptr}),
+        };
+
+        unsafe {
+            if ext::git_branch_set_upstream(self.c_ref, c_name) == 0 {
+                ()
+            } else {
+                raise()
             }
         }
     }

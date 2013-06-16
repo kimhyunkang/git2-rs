@@ -183,6 +183,11 @@ pub enum git_treewalk_mode {
 
 /* from <git2/types.h> */
 
+pub type git_branch_t = c_uint;
+
+pub static GIT_BRANCH_LOCAL: git_branch_t = 1;
+pub static GIT_BRANCH_REMOTE: git_branch_t = 2;
+
 // the storage size of these types are unknown
 pub type git_repository = c_void;
 pub type git_reference = c_void;
@@ -344,6 +349,24 @@ pub extern {
     pub fn git_blob_create_frombuffer(oid: &mut super::OID, repo: *git_repository,
         buffer: *c_void, len: size_t) -> c_int;
     pub fn git_blob_is_binary(blob: *git_blob) -> c_int;
+
+    /* from <git2/branch.h> */
+    pub fn git_branch_create(out: &mut *git_reference, repo: *git_repository,
+        branch_name: *c_char, target: *git_commit, force: c_int) -> c_int;
+    pub fn git_branch_delete(branch: *git_reference) -> c_int;
+    pub fn git_branch_foreach(repo: *git_repository, list_flags: c_uint, branch_cb: callback_t,
+        payload: *c_void) -> c_int;
+    pub fn git_branch_move(out: &mut *git_reference, branch: *git_reference,
+        new_branch_name: *c_char, force: c_int) -> c_int;
+    pub fn git_branch_lookup(out: &mut *git_reference, repo: *git_repository, 
+        branch_name: *c_char, branch_type: git_branch_t) -> c_int;
+    pub fn git_branch_upstream(out: &mut *git_reference, branch: *git_reference) -> c_int;
+    pub fn git_branch_set_upstream(branch: *git_reference, upstream_name: *c_char) -> c_int;
+    pub fn git_branch_upstream_name(tracking_branch_name_out: *mut c_char, buffer_size: size_t,
+        repo: *git_repository, canonical_branch_name: *c_char) -> c_int;
+    pub fn git_branch_is_head(branch: *git_reference) -> c_int;
+    pub fn git_branch_remote_name(remote_name_out: *mut c_char, buffer_size: size_t, 
+        repo: *git_repository, canonical_branch_name: *c_char) -> c_int;
 }
 
 /* from <git2/commit.h> */

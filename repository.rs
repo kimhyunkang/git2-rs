@@ -173,6 +173,33 @@ pub impl Repository {
         }
     }
 
+    /// Lookup a branch by its name in a repository.
+    ///
+    /// The generated reference must be freed by the user.
+    ///
+    /// The branch name will be checked for validity.
+    /// See `git_tag_create()` for rules about valid names.
+    ///
+    /// Returns None if the branch name is invalid, or the branch is not found
+    ///
+    /// remote: True if you want to consider remote branch,
+    ///     or false if you want to consider local branch
+    fn lookup_branch(@mut self, branch_name: &str, remote: bool) -> Option<~Reference> {
+        let mut ptr: *ext::git_reference = ptr::null();
+        let branch_type = if remote { ext::GIT_BRANCH_REMOTE } else { ext::GIT_BRANCH_LOCAL };
+        do str::as_c_str(branch_name) |c_name| {
+            unsafe {
+                let res = ext::git_branch_lookup(&mut ptr, self.repo, c_name, branch_type);
+                match res {
+                    0 => Some( ~Reference { c_ref: ptr, repo_ptr: self } ),
+                    ext::GIT_ENOTFOUND => None,
+                    ext::GIT_EINVALIDSPEC => None,
+                    _ => { raise(); None },
+                }
+            }
+        }
+    }
+
     /// Lookup a commit object from repository
     fn lookup_commit(@mut self, id: &OID) -> Option<~Commit> {
         unsafe {
@@ -300,6 +327,97 @@ pub impl Repository {
             status_list.push((path, status));
         };
         status_list
+    }
+
+
+    /// Create a new branch pointing at a target commit
+    ///
+    /// A new direct reference will be created pointing to
+    /// this target commit. If `force` is true and a reference
+    /// already exists with the given name, it'll be replaced.
+    ///
+    /// The returned reference must be freed by the user.
+    ///
+    /// The branch name will be checked for validity.
+    /// See `git_tag_create()` for rules about valid names.
+    fn branch_create(@mut self, branch_name: &str, target: &Commit, force: bool)
+        -> Option<~Reference>
+    {
+        let mut ptr: *ext::git_reference = ptr::null();
+        let flag = force as c_int;
+        unsafe {
+            do str::as_c_str(branch_name) |c_name| {
+                let res = ext::git_branch_create(&mut ptr, self.repo, c_name, target.commit, flag);
+                match res {
+                    0 => Some( ~Reference { c_ref: ptr, repo_ptr: self } ),
+                    ext::GIT_EINVALIDSPEC => None,
+                    _ => { raise(); None },
+                }
+            }
+        }
+    }
+
+    /// Loop over all the branches and issue a callback for each one.
+    fn branch_foreach(&self, local: bool, remote: bool,
+        op: &fn(name: &str, is_remote: bool) -> bool) -> bool
+    {
+        let flocal = if local { ext::GIT_BRANCH_LOCAL } else { 0 };
+        let fremote = if remote { ext::GIT_BRANCH_REMOTE } else { 0 };
+        let flags = flocal & fremote;
+        unsafe {
+            let payload: *c_void = cast::transmute(&op);
+            let res = ext::git_branch_foreach(self.repo, flags, git_branch_foreach_cb, payload);
+            match res {
+                0 => true,
+                ext::GIT_EUSER => false,
+                _ => { raise(); false },
+            }
+        }
+    }
+
+    /// Return the name of the reference supporting the remote tracking branch,
+    /// given the name of a local branch reference.
+    fn upstream_name(&self, canonical_branch_name: &str) -> Option<~str>
+    {
+        let mut buf: [c_char, ..1024] = [0, ..1024];
+        do str::as_c_str(canonical_branch_name) |c_name| {
+            do vec::as_mut_buf(buf) |v, _len| {
+                unsafe {
+                    let res = ext::git_branch_upstream_name(v, 1024, self.repo, c_name);
+                    if res >= 0 {
+                        let ptr: *c_char = cast::transmute(v);
+                        Some( str::raw::from_c_str_len(ptr, res as uint) )
+                    } else if res == ext::GIT_ENOTFOUND {
+                        None
+                    } else {
+                        raise();
+                        None
+                    }
+                }
+            }
+        }
+    }
+
+    /// Return the name of remote that the remote tracking branch belongs to.
+    /// returns Err(GIT_ENOTFOUND) when no remote matching remote was found,
+    /// returns Err(GIT_EAMBIGUOUS) when the branch maps to several remotes,
+    pub fn git_branch_remote_name(&self, canonical_branch_name: &str)
+        -> Result<~str, (~str, GitError)>
+    {
+        let mut buf: [c_char, ..1024] = [0, ..1024];
+        do str::as_c_str(canonical_branch_name) |c_name| {
+            do vec::as_mut_buf(buf) |v, _len| {
+                unsafe {
+                    let res = ext::git_branch_remote_name(v, 1024, self.repo, c_name);
+                    if res >= 0 {
+                        let ptr: *c_char = cast::transmute(v);
+                        Ok( str::raw::from_c_str_len(ptr, res as uint) )
+                    } else {
+                        Err( last_error() )
+                    }
+                }
+            }
+        }
     }
 
     /// Lookup a blob object from a repository.
@@ -494,6 +612,22 @@ extern fn git_blob_chunk_cb(content: *mut u8, max_length: size_t, payload: *&io:
             } else {
                 reader.read(v, len) as c_int
             }
+        }
+    }
+}
+
+extern fn git_branch_foreach_cb(branch_name: *c_char, branch_type: ext::git_branch_t,
+    payload: *c_void) -> c_int
+{
+    unsafe {
+        let op_ptr: *&fn(name: &str, is_remote: bool) -> bool = cast::transmute(payload);
+        let op = *op_ptr;
+        let branch_str = str::raw::from_c_str(branch_name);
+        let is_remote = (branch_type == ext::GIT_BRANCH_REMOTE);
+        if op(branch_str, is_remote) {
+            0
+        } else {
+            1
         }
     }
 }
