@@ -92,6 +92,27 @@ pub impl Commit {
         }
     }
 
+    /// Get the commit object that is the <n>th generation ancestor
+    /// of the commit object, following only the first parents.
+    ///
+    /// Passing `0` as the generation number returns another instance of the
+    /// base commit itself.
+    fn nth_gen_ancestor(&self, n: uint) -> Option<~Commit>
+    {
+        let mut ancestor: *ext::git_commit = ptr::null();
+        unsafe {
+            let res = ext::git_commit_parent(&mut ancestor, self.commit, n as c_uint);
+            match res {
+                0 => Some( ~Commit { commit: ancestor, owner: self.owner } ),
+                ext::GIT_ENOTFOUND => None,
+                _ => {
+                    raise!(conditions::commit_fail::cond);
+                    None
+                },
+            }
+        }
+    }
+
     /// Get the oid of parents for the commit. This is different from
     /// parents(&self), which will attempt to load the parent commit from the ODB.
     fn parents_oid(&self) -> ~[~OID]
