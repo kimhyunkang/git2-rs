@@ -1,23 +1,18 @@
 use core::libc::c_char;
 
-use super::OID;
+use super::{OID, raise};
 use ext;
-use conditions;
 use core::{from_str, to_str};
 
 fn from_str(s: &str) -> OID {
     unsafe {
         let mut oid = OID { id: [0, .. 20] };
         do str::as_c_str(s) |c_str| {
-            if ext::git_oid_fromstr(&mut oid, c_str) == 0 {
-                oid
-            } else {
-                let err = ext::giterr_last();
-                let message = str::raw::from_c_str((*err).message);
-                let klass = (*err).klass;
-                conditions::bad_oid::cond.raise((message, klass))
+            if ext::git_oid_fromstr(&mut oid, c_str) != 0 {
+                raise()
             }
         }
+        return oid;
     }
 }
 

@@ -1,7 +1,5 @@
-use super::{GitIndex, Tree, OID};
+use super::*;
 use ext;
-
-use conditions;
 
 impl GitIndex {
     /// Add or update an index entry from a file on disk
@@ -19,12 +17,12 @@ impl GitIndex {
     /// file will no longer be marked as conflicting.  The data about
     /// the conflict will be moved to the "resolve undo" (REUC) section.
     ///
-    /// raises index_fail on error
+    /// raises git_error on error
     pub fn add_bypath(&mut self, path: &str) {
         unsafe {
             do str::as_c_str(path) |c_path| {
                 if ext::git_index_add_bypath(self.index, c_path) != 0 {
-                    raise!(conditions::index_fail::cond);
+                    raise()
                 }
             }
         }
@@ -38,12 +36,12 @@ impl GitIndex {
     /// file will no longer be marked as conflicting.  The data about
     /// the conflict will be moved to the "resolve undo" (REUC) section.
     ///
-    /// raises index_fail on error
+    /// raises git_error on error
     pub fn remove_bypath(&mut self, path: &str) {
         unsafe {
             do str::as_c_str(path) |c_path| {
                 if ext::git_index_remove_bypath(self.index, c_path) != 0 {
-                    raise!(conditions::index_fail::cond);
+                    raise();
                 }
             }
         }
@@ -52,23 +50,23 @@ impl GitIndex {
     /// Read a tree into the index file with stats
     ///
     /// The current index contents will be replaced by the specified tree.
-    /// raises index_fail on error
+    /// raises git_error on error
     pub fn read_tree(&mut self, tree: &Tree) {
         unsafe {
             if ext::git_index_read_tree(self.index, tree.tree) != 0 {
-                raise!(conditions::index_fail::cond);
+                raise()
             }
         }
     }
 
     /// Write an existing index object from memory back to disk using an atomic file lock.
     ///
-    /// raises index_fail on error
+    /// raises git_error on error
     pub fn write(&self)
     {
         unsafe {
             if ext::git_index_write(self.index) != 0 {
-                raise!(conditions::index_fail::cond)
+                raise()
             }
         }
     }
@@ -84,18 +82,18 @@ impl GitIndex {
     /// to an existing repository.
     ///
     /// The index must not contain any file in conflict.
-    pub fn write_tree(&self) -> ~Tree {
+    pub fn write_tree(&self) -> Result<~Tree, (~str, GitError)> {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
             if ext::git_index_write_tree(&mut oid, self.index) == 0 {
                 let mut ptr_to_tree: *ext::git_tree = ptr::null();
                 if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, &oid) == 0 {
-                    ~Tree { tree: ptr_to_tree, owner: self.owner }
+                    Ok( ~Tree { tree: ptr_to_tree, owner: self.owner } )
                 } else {
-                    raise!(conditions::bad_tree::cond)
+                    Err( last_error() )
                 }
             } else {
-                raise!(conditions::bad_tree::cond)
+                Err( last_error() )
             }
         }
     }

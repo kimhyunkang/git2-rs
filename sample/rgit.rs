@@ -40,8 +40,8 @@ fn main() {
 }
 
 fn get_current_repo() -> @mut git2::Repository {
-    let dir = git2::repository::discover(&".", false, &"");
-    git2::repository::open(dir)
+    let dir = git2::repository::discover(&".", false, &"").get();
+    git2::repository::open(dir).unwrap()
 }
 
 fn cmd_init(args: &[~str]) {
@@ -85,7 +85,8 @@ fn cmd_status(_: &str, _: &[~str]) {
     if repo.is_empty() {
         println("Empty repository")
     } else {
-        match repo.head().branch_name() {
+        let head = repo.head().unwrap();
+        match head.branch_name() {
             Some(branch) => println(fmt!("On branch %s", branch)),
             None => println("Not currently on any branch"),
         }
@@ -159,7 +160,7 @@ fn cmd_add(program: &str, args: &[~str]) {
     } else {
         let path = copy args[0];
         let repo = get_current_repo();
-        let mut index = repo.index();
+        let mut index = repo.index().unwrap();
         index.add_bypath(path);
         index.write();
     }
@@ -175,7 +176,7 @@ fn cmd_rm(program: &str, args: &[~str]) {
     } else {
         let path = copy args[0];
         let repo = get_current_repo();
-        let mut index = repo.index();
+        let mut index = repo.index().unwrap();
         index.remove_bypath(path);
         index.write();
     }

@@ -3,14 +3,19 @@ extern mod git2;
 
 #[test]
 fn repo_head() {
-    let repo = git2::repository::open("fixture");
-    let head_id = repo.head().resolve();
-    assert_eq!(head_id.to_str(), ~"21002f5d3f411fe990e13604273a51cd598a4a51")
+    let repo = git2::repository::open("fixture").unwrap();
+    match repo.head() {
+        Some(head_id) => {
+            let oid = head_id.resolve();
+            assert_eq!(oid.to_str(), ~"21002f5d3f411fe990e13604273a51cd598a4a51")
+        }
+        None => fail!(~"failed to resolve head"),
+    }
 }
 
 #[test]
 fn repo_lookup() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
 
     match repo.lookup("refs/heads/master") {
         None => fail!(~"failed to lookup master ref"),
@@ -23,13 +28,13 @@ fn repo_lookup() {
 
 #[test]
 fn repo_empty() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
     assert_eq!(repo.is_empty(), false)
 }
 
 #[test]
 fn repo_bare() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
     assert_eq!(repo.is_bare(), false)
 }
 
@@ -42,7 +47,7 @@ fn repo_oid() {
 
 #[test]
 fn repo_lookup_commit() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
     let oid = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
     match repo.lookup_commit(&oid) {
         None => {
@@ -56,7 +61,7 @@ fn repo_lookup_commit() {
 
 #[test]
 fn commit_apis() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
     let oid = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
     let time_str = "Tue, 11 Jun 2013 19:14:48";
     let rfc822z = "%a, %d %b %Y %T";
@@ -85,7 +90,7 @@ fn commit_apis() {
 
 #[test]
 fn commit() {
-    let repo = git2::repository::open("fixture");
+    let repo = git2::repository::open("fixture").unwrap();
     let parent_id = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
     let parent = match repo.lookup_commit(&parent_id) {
         None => fail!(~"commit does not exist"),
@@ -105,7 +110,7 @@ fn commit() {
     };
 
     let text = "blob text\n";
-    let blob = repo.blob_create_frombuffer(str::as_bytes_slice(text));
+    let blob = repo.blob_create_frombuffer(str::as_bytes_slice(text)).unwrap();
 
     let mut treebuilder = git2::TreeBuilder::from_tree(parent.tree());
     treebuilder.insert(&"test_blob.txt", blob.id(), git2::GIT_FILEMODE_BLOB);

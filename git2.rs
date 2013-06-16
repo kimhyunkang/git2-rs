@@ -7,17 +7,7 @@
 
 #[crate_type = "lib"];
 
-macro_rules! raise {
-    ($cond_expr:expr) => ({
-        let err = ext::giterr_last();
-        let message = str::raw::from_c_str((*err).message);
-        let klass = (*err).klass;
-        $cond_expr.raise((message, klass))
-    })
-}
-
 pub mod ext;
-pub mod conditions;
 pub mod repository;
 pub mod reference;
 pub mod index;
@@ -26,6 +16,21 @@ pub mod blob;
 pub mod commit;
 pub mod signature;
 pub mod oid;
+
+condition! {
+    git_error: (~str, super::GitError) -> ();
+}
+
+pub unsafe fn raise() {
+    git_error::cond.raise(last_error())
+}
+
+pub unsafe fn last_error() -> (~str, GitError) {
+    let err = ext::giterr_last();
+    let message = str::raw::from_c_str((*err).message);
+    let klass = (*err).klass;
+    (message, klass)
+}
 
 /** Error classes */
 pub enum GitError {
@@ -93,7 +98,7 @@ impl TreeBuilder {
             if ext::git_treebuilder_create(&mut bld, ptr::null()) == 0 {
                 TreeBuilder { bld: bld }
             } else {
-                raise!(conditions::bad_treebuilder::cond)
+                fail!(~"failed to create treebuilder")
             }
         }
     }
@@ -107,7 +112,7 @@ impl TreeBuilder {
             if ext::git_treebuilder_create(&mut bld, tree.tree) == 0 {
                 TreeBuilder { bld: bld }
             } else {
-                raise!(conditions::bad_treebuilder::cond)
+                fail!(~"failed to create treebuilder")
             }
         }
     }

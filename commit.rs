@@ -1,8 +1,7 @@
 use core::libc::c_uint;
-use conditions;
 use ext;
 use signature;
-use super::{Commit, Signature, OID, Tree};
+use super::*;
 
 pub impl Commit {
     /// get the id of the commit
@@ -65,7 +64,7 @@ pub impl Commit {
             if ext::git_commit_tree(&mut tree, self.commit) == 0 {
                 ~Tree { tree: tree, owner: self.owner }
             } else {
-                raise!(conditions::bad_tree::cond)
+                fail!(~"failed to retrieve tree")
             }
         }
     }
@@ -76,19 +75,24 @@ pub impl Commit {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
             let mut parents:~[~Commit] = vec::with_capacity(len);
-            for uint::range(0, len) |i| {
+            let mut success = true;
+            do uint::range(0, len) |i| {
                 let mut commit_ptr:*ext::git_commit = ptr::null();
-                let commit =
                 if ext::git_commit_parent(&mut commit_ptr, self.commit, i as c_uint) == 0 {
-                    ~Commit { commit: commit_ptr, owner: self.owner }
+                    let commit = ~Commit { commit: commit_ptr, owner: self.owner };
+                    parents.push(commit);
                 } else {
-                    raise!(conditions::bad_commit::cond)
+                    raise();
+                    success = false;
                 };
-
-                parents.push(commit)
+                success
             }
 
-            return parents;
+            if success {
+                return parents;
+            } else {
+                return ~[];
+            }
         }
     }
 
@@ -106,7 +110,7 @@ pub impl Commit {
                 0 => Some( ~Commit { commit: ancestor, owner: self.owner } ),
                 ext::GIT_ENOTFOUND => None,
                 _ => {
-                    raise!(conditions::commit_fail::cond);
+                    raise();
                     None
                 },
             }
@@ -120,22 +124,25 @@ pub impl Commit {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
             let mut parents:~[~OID] = vec::with_capacity(len);
-            for uint::range(0, len) |i| {
+            let mut success = true;
+            do uint::range(0, len) |i| {
                 let mut oid = OID { id: [0, .. 20] };
                 let res_ptr = ext::git_commit_parent_id(self.commit, i as c_uint);
                 if res_ptr == ptr::null() {
-                    let err = ext::giterr_last();
-                    let message = str::raw::from_c_str((*err).message);
-                    let klass = (*err).klass;
-                    let trap_oid = conditions::bad_oid::cond.raise((message, klass));
-                    parents.push(~trap_oid);
+                    raise();
+                    success = false;
                 } else {
                     ptr::copy_memory(&mut oid, res_ptr, 1);
                     parents.push(~oid);
                 }
+                success
             }
 
-            return parents;
+            if success {
+                return parents;
+            } else {
+                return ~[];
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 use core::libc::{size_t, c_void, c_char, c_int};
 use super::*;
-use conditions;
 use ext;
 
 pub impl Tree {
@@ -77,7 +76,7 @@ pub impl Tree {
             } else if result == ext::GIT_EUSER {
                 false
             } else {
-                raise!(conditions::iter_fail::cond);
+                raise();
                 false
             }
         }
@@ -102,7 +101,7 @@ pub impl Tree {
             } else if result == ext::GIT_EUSER {
                 false
             } else {
-                raise!(conditions::iter_fail::cond);
+                raise();
                 false
             }
         }
@@ -315,16 +314,17 @@ pub impl TreeBuilder {
     /// filename: Filename of the entry
     /// id: SHA1 OID of the entry
     /// filemode: Folder attributes of the entry. This parameter must not be GIT_FILEMODE_NEW
-    fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) -> ~TreeEntry
+    fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) ->
+        Result<~TreeEntry, (~str, GitError)>
     {
         do str::as_c_str(filename) |c_filename| {
             unsafe {
                 let mut entry_ptr:*ext::git_tree_entry = ptr::null();
                 if(ext::git_treebuilder_insert(&mut entry_ptr, self.bld, c_filename, id,
                                                 filemode) == 0) {
-                    ~TreeEntry { tree_entry: entry_ptr, owned: false }
+                    Ok( ~TreeEntry { tree_entry: entry_ptr, owned: false } )
                 } else {
-                    raise!(conditions::bad_treeentry::cond)
+                    Err( last_error() )
                 }
             }
         }
@@ -363,12 +363,11 @@ pub impl TreeBuilder {
     {
         let mut oid = OID { id: [0, ..20] };
         unsafe {
-            if ext::git_treebuilder_write(&mut oid, repo.repo, self.bld) == 0 {
-                oid
-            } else {
-                raise!(conditions::bad_oid::cond)
+            if ext::git_treebuilder_write(&mut oid, repo.repo, self.bld) != 0 {
+                raise()
             }
         }
+        return oid;
     }
 
     /// Get the number of entries listed in a treebuilder

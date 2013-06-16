@@ -1,7 +1,6 @@
 use core::libc::c_char;
-use super::{Reference, OID};
+use super::{Reference, OID, raise};
 use ext;
-use conditions;
 
 pub impl Reference {
     ///
@@ -27,23 +26,19 @@ pub impl Reference {
     fn resolve(&self) -> OID {
         unsafe {
             let mut resolved_ref: *ext::git_reference = ptr::null();
+            let mut oid = OID { id: [0, .. 20] };
             if ext::git_reference_resolve(&mut resolved_ref, self.c_ref) == 0 {
                 let result_oid = ext::git_reference_target(resolved_ref);
                 if result_oid == ptr::null() {
-                    let err = ext::giterr_last();
-                    let message = str::raw::from_c_str((*err).message);
-                    let klass = (*err).klass;
-                    ext::git_reference_free(resolved_ref);
-                    conditions::bad_oid::cond.raise((message, klass))
+                    raise();
                 } else {
-                    let mut oid = OID { id: [0, .. 20] };
                     ptr::copy_memory(&mut oid, result_oid, 1);
                     ext::git_reference_free(resolved_ref);
-                    oid
                 }
             } else {
-                raise!(conditions::bad_oid::cond)
+                raise();
             }
+            return oid;
         }
     }
 }
