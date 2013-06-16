@@ -10,7 +10,7 @@
 pub mod ext;
 pub mod repository;
 pub mod reference;
-pub mod index;
+pub mod git_index;
 pub mod tree;
 pub mod blob;
 pub mod commit;
