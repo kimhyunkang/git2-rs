@@ -7,6 +7,9 @@ rgit: lib
 test: lib
 	cd test; ${MAKE}
 
+doc:
+	rustdoc --output-dir=docs --output-format=markdown git2.rs
+
 clean:
 	rm -rf *.dylib *.dSYM *.so *.o
 	cd sample; ${MAKE} clean
