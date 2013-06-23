@@ -1,4 +1,4 @@
-use core::libc::{c_char, c_int};
+use std::libc::{c_char, c_int};
 use super::{Reference, OID, raise};
 use ext;
 

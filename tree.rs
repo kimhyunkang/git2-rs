@@ -1,4 +1,4 @@
-use core::libc::{size_t, c_void, c_char, c_int};
+use std::libc::{size_t, c_void, c_char, c_int};
 use super::*;
 use ext;
 

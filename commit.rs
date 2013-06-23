@@ -1,4 +1,4 @@
-use core::libc::c_uint;
+use std::libc::c_uint;
 use ext;
 use signature;
 use super::*;

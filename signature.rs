@@ -1,4 +1,4 @@
-use core::libc::c_int;
+use std::libc::c_int;
 
 use ext;
 use super::{Signature, Time};

@@ -1,8 +1,8 @@
-use core::libc::c_char;
+use std::libc::c_char;
 
 use super::{OID, raise};
 use ext;
-use core::{from_str, to_str};
+use std::{from_str, to_str};
 
 fn from_str(s: &str) -> OID {
     unsafe {

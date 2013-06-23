@@ -1,4 +1,4 @@
-use core::libc::{c_char, c_void, c_int, c_uint, size_t};
+use std::libc::{c_char, c_void, c_int, c_uint, size_t};
 
 /* from <git2/errors.h> */
 pub struct git_error {

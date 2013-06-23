@@ -141,7 +141,7 @@ pub struct Signature {
 }
 
 pub struct OID {
-    pub id: [core::libc::c_char, ..20],
+    pub id: [std::libc::c_char, ..20],
 }
 
 /// Status flags for a single file.
