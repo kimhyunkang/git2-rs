@@ -1,9 +1,9 @@
 use super::{Blob, OID};
 use ext;
 
-pub impl Blob {
+impl Blob {
     /// get the id of the blob
-    fn id(&self) -> &'self OID
+    pub fn id(&self) -> &'self OID
     {
         unsafe {
             // OID pointer returned by git_blob_id is const pointer
@@ -16,7 +16,7 @@ pub impl Blob {
     /// Get a read-only buffer with the raw content of a blob.
     ///
     /// A reference to the raw content of a blob is transferred to closure
-    fn rawcontent_as_slice<T>(&self, f: &fn(v: &[u8]) -> T) -> T
+    pub fn rawcontent_as_slice<T>(&self, f: &fn(v: &[u8]) -> T) -> T
     {
         unsafe {
             let ptr:*u8 = cast::transmute(ext::git_blob_rawcontent(self.blob));
@@ -33,7 +33,7 @@ pub impl Blob {
     /// The heuristic used to guess if a file is binary is taken from core git:
     /// Searching for NUL bytes and looking for a reasonable ratio of printable
     /// to non-printable characters among the first 4000 bytes.
-    fn is_binary(&self) -> bool
+    pub fn is_binary(&self) -> bool
     {
         unsafe {
             ext::git_blob_is_binary(self.blob) as bool

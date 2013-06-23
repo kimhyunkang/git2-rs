@@ -3,9 +3,9 @@ use ext;
 use signature;
 use super::*;
 
-pub impl Commit {
+impl Commit {
     /// get the id of the commit
-    fn id(&self) -> &'self OID
+    pub fn id(&self) -> &'self OID
     {
         unsafe {
             // OID pointer returned by git_commit_id is const pointer
@@ -17,7 +17,7 @@ pub impl Commit {
     /// Get the encoding for the message of the commit,
     /// as a string representing a standard encoding name
     /// The encoding may be None, in that case UTF-8 is assumed
-    fn message_encoding(&self) -> Option<~str>
+    pub fn message_encoding(&self) -> Option<~str>
     {
         unsafe {
             let encoding = ext::git_commit_message_encoding(self.commit);
@@ -30,7 +30,7 @@ pub impl Commit {
     }
 
     /// Get the full message of the commit
-    fn message(&self) -> ~str
+    pub fn message(&self) -> ~str
     {
         unsafe {
             let message = ext::git_commit_message(self.commit);
@@ -39,7 +39,7 @@ pub impl Commit {
     }
 
     /// Get the committer of a commit
-    fn committer(&self) -> Signature
+    pub fn committer(&self) -> Signature
     {
         unsafe {
             let sig = ext::git_commit_committer(self.commit);
@@ -48,7 +48,7 @@ pub impl Commit {
     }
 
     /// Get the author of a commit
-    fn author(&self) -> Signature
+    pub fn author(&self) -> Signature
     {
         unsafe {
             let sig = ext::git_commit_author(self.commit);
@@ -57,7 +57,7 @@ pub impl Commit {
     }
 
     /// Get the tree pointed to by a commit.
-    fn tree(&self) -> ~Tree
+    pub fn tree(&self) -> ~Tree
     {
         unsafe {
             let mut tree:*ext::git_tree = ptr::null();
@@ -70,7 +70,7 @@ pub impl Commit {
     }
 
     /// Get the parents of the commit.
-    fn parents(&self) -> ~[~Commit]
+    pub fn parents(&self) -> ~[~Commit]
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
@@ -101,7 +101,7 @@ pub impl Commit {
     ///
     /// Passing `0` as the generation number returns another instance of the
     /// base commit itself.
-    fn nth_gen_ancestor(&self, n: uint) -> Option<~Commit>
+    pub fn nth_gen_ancestor(&self, n: uint) -> Option<~Commit>
     {
         let mut ancestor: *ext::git_commit = ptr::null();
         unsafe {
@@ -119,7 +119,7 @@ pub impl Commit {
 
     /// Get the oid of parents for the commit. This is different from
     /// parents(&self), which will attempt to load the parent commit from the ODB.
-    fn parents_oid(&self) -> ~[~OID]
+    pub fn parents_oid(&self) -> ~[~OID]
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;

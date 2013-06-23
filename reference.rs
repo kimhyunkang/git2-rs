@@ -11,7 +11,7 @@ pub fn branch_delete(reference: ~Reference) {
     }
 }
 
-pub impl Reference {
+impl Reference {
     ///
     /// Return the name of the given local or remote branch.
     ///
@@ -21,7 +21,7 @@ pub impl Reference {
     ///
     /// return Some(~str) on success; otherwise None (if the ref is no local or remote branch).
     ///
-    fn branch_name(&self) -> Option<~str> {
+    pub fn branch_name(&self) -> Option<~str> {
         unsafe {
             let mut ptr_to_name: *c_char = ptr::null();
             if ext::git_branch_name(&mut ptr_to_name, self.c_ref) == 0 {
@@ -33,7 +33,7 @@ pub impl Reference {
     }
 
     /// Determine if the current local branch is pointed at by HEAD.
-    fn is_head(&self) -> bool {
+    pub fn is_head(&self) -> bool {
         unsafe {
             match ext::git_branch_is_head(self.c_ref) {
                 1 => true,
@@ -47,7 +47,7 @@ pub impl Reference {
     ///
     /// The new branch name will be checked for validity.
     /// See `git_tag_create()` for rules about valid names.
-    fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<~Reference>
+    pub fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<~Reference>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         let flag = force as c_int;
@@ -65,7 +65,7 @@ pub impl Reference {
 
     /// Return the reference supporting the remote tracking branch,
     /// returns None when the upstream is not found
-    fn upstream(&self) -> Option<~Reference>
+    pub fn upstream(&self) -> Option<~Reference>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         unsafe {
@@ -81,7 +81,7 @@ pub impl Reference {
     /// Set the upstream configuration for a given local branch
     /// upstream_name: remote-tracking or local branch to set as
     ///     upstream. Pass None to unset.
-    fn set_upstream(&mut self, upstream_name: Option<&str>)
+    pub fn set_upstream(&mut self, upstream_name: Option<&str>)
     {
         let c_name =
         match upstream_name {
@@ -98,7 +98,7 @@ pub impl Reference {
         }
     }
 
-    fn resolve(&self) -> OID {
+    pub fn resolve(&self) -> OID {
         unsafe {
             let mut resolved_ref: *ext::git_reference = ptr::null();
             let mut oid = OID { id: [0, .. 20] };

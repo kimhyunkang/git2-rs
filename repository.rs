@@ -114,12 +114,12 @@ pub fn clone(url: &str, local_path: &str) -> Result<@mut Repository, (~str, GitE
     }
 }
 
-pub impl Repository {
+impl Repository {
     /// Get the path of this repository
     ///
     /// This is the path of the `.git` folder for normal repositories,
     /// or of the repository itself for bare repositories.
-    fn path(&self) -> ~str {
+    pub fn path(&self) -> ~str {
         unsafe {
             let c_path = ext::git_repository_path(self.repo);
             str::raw::from_c_str(c_path)
@@ -129,7 +129,7 @@ pub impl Repository {
     /// Get the path of the working directory for this repository
     ///
     /// If the repository is bare, this function will always return None.
-    fn workdir(&self) -> Option<~str> {
+    pub fn workdir(&self) -> Option<~str> {
         unsafe {
             let c_path = ext::git_repository_workdir(self.repo);
             if ptr::is_null(c_path) {
@@ -141,7 +141,7 @@ pub impl Repository {
     }
 
     /// Retrieve and resolve the reference pointed at by HEAD.
-    fn head(@mut self) -> Option<~Reference> {
+    pub fn head(@mut self) -> Option<~Reference> {
         unsafe {
             let mut ptr_to_ref: *ext::git_reference = ptr::null();
 
@@ -159,7 +159,7 @@ pub impl Repository {
 
     /// Lookup a reference by name in a repository.
     /// The name will be checked for validity.
-    fn lookup(@mut self, name: &str) -> Option<~Reference> {
+    pub fn lookup(@mut self, name: &str) -> Option<~Reference> {
         unsafe {
             let mut ptr_to_ref: *ext::git_reference = ptr::null();
 
@@ -184,7 +184,7 @@ pub impl Repository {
     ///
     /// remote: True if you want to consider remote branch,
     ///     or false if you want to consider local branch
-    fn lookup_branch(@mut self, branch_name: &str, remote: bool) -> Option<~Reference> {
+    pub fn lookup_branch(@mut self, branch_name: &str, remote: bool) -> Option<~Reference> {
         let mut ptr: *ext::git_reference = ptr::null();
         let branch_type = if remote { ext::GIT_BRANCH_REMOTE } else { ext::GIT_BRANCH_LOCAL };
         do str::as_c_str(branch_name) |c_name| {
@@ -201,7 +201,7 @@ pub impl Repository {
     }
 
     /// Lookup a commit object from repository
-    fn lookup_commit(@mut self, id: &OID) -> Option<~Commit> {
+    pub fn lookup_commit(@mut self, id: &OID) -> Option<~Commit> {
         unsafe {
             let mut commit: *ext::git_commit = ptr::null();
             if ext::git_commit_lookup(&mut commit, self.repo, id) == 0 {
@@ -213,7 +213,7 @@ pub impl Repository {
     }
 
     /// Lookup a tree object from repository
-    fn lookup_tree(@mut self, id: &OID) -> Option<~Tree> {
+    pub fn lookup_tree(@mut self, id: &OID) -> Option<~Tree> {
         unsafe {
             let mut tree: *ext::git_tree = ptr::null();
             if ext::git_tree_lookup(&mut tree, self.repo, id) == 0 {
@@ -230,7 +230,7 @@ pub impl Repository {
     ///
     /// returns true when successful, false if HEAD points to an non-existing branch
     /// raise on other errors
-    fn checkout_head(&mut self) -> bool {
+    pub fn checkout_head(&mut self) -> bool {
         unsafe {
             match ext::git_checkout_head(self.repo, ptr::null()) {
                 0 => true,
@@ -248,7 +248,7 @@ pub impl Repository {
     /// If a custom index has not been set, the default
     /// index for the repository will be returned (the one
     /// located in `.git/index`).
-    fn index(@mut self) -> Result<~GitIndex, (~str, GitError)> {
+    pub fn index(@mut self) -> Result<~GitIndex, (~str, GitError)> {
         unsafe {
             let mut ptr_to_ref: *ext::git_index = ptr::null();
 
@@ -261,7 +261,7 @@ pub impl Repository {
     }
 
     /// Check if a repository is empty
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         unsafe {
             let res = ext::git_repository_is_empty(self.repo);
             if res < 0 {
@@ -274,7 +274,7 @@ pub impl Repository {
     }
 
     /// Check if a repository is bare
-    fn is_bare(&self) -> bool {
+    pub fn is_bare(&self) -> bool {
         unsafe {
             ext::git_repository_is_bare(self.repo) as bool
         }
@@ -290,7 +290,7 @@ pub impl Repository {
     ///   Err(e): found libgit2 errors
     ///
     /// This method is unsafe, as it blocks other tasks while running
-    unsafe fn each_status(&self,
+    pub unsafe fn each_status(&self,
                             op: &fn(path: ~str, status_flags: c_uint) -> bool)
                             -> bool
     {
@@ -309,7 +309,7 @@ pub impl Repository {
     }
 
     /// Safer variant of each_status
-    fn status(&self) -> ~[(~str, ~Status)] {
+    pub fn status(&self) -> ~[(~str, ~Status)] {
         let mut status_list:~[(~str, ~Status)] = ~[];
         for self.each_status |path, status_flags| {
             let status = ~Status {
@@ -340,7 +340,7 @@ pub impl Repository {
     ///
     /// The branch name will be checked for validity.
     /// See `git_tag_create()` for rules about valid names.
-    fn branch_create(@mut self, branch_name: &str, target: &Commit, force: bool)
+    pub fn branch_create(@mut self, branch_name: &str, target: &Commit, force: bool)
         -> Option<~Reference>
     {
         let mut ptr: *ext::git_reference = ptr::null();
@@ -358,7 +358,7 @@ pub impl Repository {
     }
 
     /// Loop over all the branches and issue a callback for each one.
-    fn branch_foreach(&self, local: bool, remote: bool,
+    pub fn branch_foreach(&self, local: bool, remote: bool,
         op: &fn(name: &str, is_remote: bool) -> bool) -> bool
     {
         let flocal = if local { ext::GIT_BRANCH_LOCAL } else { 0 };
@@ -377,7 +377,7 @@ pub impl Repository {
 
     /// Return the name of the reference supporting the remote tracking branch,
     /// given the name of a local branch reference.
-    fn upstream_name(&self, canonical_branch_name: &str) -> Option<~str>
+    pub fn upstream_name(&self, canonical_branch_name: &str) -> Option<~str>
     {
         let mut buf: [c_char, ..1024] = [0, ..1024];
         do str::as_c_str(canonical_branch_name) |c_name| {
@@ -421,7 +421,7 @@ pub impl Repository {
     }
 
     /// Lookup a blob object from a repository.
-    fn blob_lookup(@mut self, id: &OID) -> Option<~Blob>
+    pub fn blob_lookup(@mut self, id: &OID) -> Option<~Blob>
     {
         let mut ptr: *ext::git_blob = ptr::null();
         unsafe {
@@ -435,7 +435,7 @@ pub impl Repository {
 
     /// Read a file from the working folder of a repository
     /// and write it to the Object Database as a loose blob
-    fn blob_create_fromworkdir(@mut self, relative_path: &str) -> Result<~Blob, (~str, GitError)>
+    pub fn blob_create_fromworkdir(@mut self, relative_path: &str) -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
         let mut ptr: *ext::git_blob = ptr::null();
@@ -455,7 +455,7 @@ pub impl Repository {
 
     /// Read a file from the filesystem and write its content
     /// to the Object Database as a loose blob
-    fn blob_create_fromdisk(@mut self, relative_path: &str) -> Result<~Blob, (~str, GitError)>
+    pub fn blob_create_fromdisk(@mut self, relative_path: &str) -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
         let mut ptr: *ext::git_blob = ptr::null();
@@ -479,7 +479,7 @@ pub impl Repository {
     /// Provided the `hintpath` parameter is not None, its value
     /// will help to determine what git filters should be applied
     /// to the object before it can be placed to the object database.
-    fn blob_create_fromreader(@mut self, reader: &io::Reader, hintpath: Option<&str>)
+    pub fn blob_create_fromreader(@mut self, reader: &io::Reader, hintpath: Option<&str>)
         -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
@@ -504,7 +504,7 @@ pub impl Repository {
     }
 
     /// Write an in-memory buffer to the ODB as a blob
-    fn blob_create_frombuffer(@mut self, buffer: &[u8]) -> Result<~Blob, (~str, GitError)>
+    pub fn blob_create_frombuffer(@mut self, buffer: &[u8]) -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
         do vec::as_imm_buf(buffer) |v, len| {
@@ -554,7 +554,7 @@ pub impl Repository {
     ///
     /// parents: Vector of Commit objects that will be used as the parents for this commit.
     ///  All the given commits must be owned by `self`.
-    fn commit(&mut self, update_ref: Option<&str>, author: &Signature, committer: &Signature,
+    pub fn commit(&mut self, update_ref: Option<&str>, author: &Signature, committer: &Signature,
             message_encoding: Option<&str>, message: &str, tree: &Tree,
             parents: &[~Commit]) -> OID
     {

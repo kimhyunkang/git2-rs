@@ -2,9 +2,9 @@ use core::libc::{size_t, c_void, c_char, c_int};
 use super::*;
 use ext;
 
-pub impl Tree {
+impl Tree {
     /// Get the id of a tree.
-    fn id(&self) -> &'self OID
+    pub fn id(&self) -> &'self OID
     {
         unsafe {
             cast::transmute(ext::git_tree_id(self.tree))
@@ -12,7 +12,7 @@ pub impl Tree {
     }
 
     /// Lookup a tree entry by its filename
-    fn entry_byname(&self, filename: &str) -> Option<~TreeEntry>
+    pub fn entry_byname(&self, filename: &str) -> Option<~TreeEntry>
     {
         do str::as_c_str(filename) |c_filename| {
             unsafe {
@@ -28,7 +28,7 @@ pub impl Tree {
 
     /// Lookup a tree entry by SHA value.
     /// Warning: this must examine every entry in the tree, so it is not fast.
-    fn entry_byoid(&self, oid: &OID) -> Option<~TreeEntry>
+    pub fn entry_byoid(&self, oid: &OID) -> Option<~TreeEntry>
     {
         unsafe {
             let entry_ptr = ext::git_tree_entry_byoid(self.tree, oid);
@@ -42,7 +42,7 @@ pub impl Tree {
 
     /// Retrieve a tree entry contained in a tree or in any of its subtrees,
     /// given its relative path.
-    fn entry_bypath(&self, path: &str) -> Option<~TreeEntry>
+    pub fn entry_bypath(&self, path: &str) -> Option<~TreeEntry>
     {
         do str::as_c_str(path) |c_path| {
             unsafe {
@@ -66,7 +66,7 @@ pub impl Tree {
     /// WalkPass continues the walk, and WalkStop stops the walk.
     ///
     /// The function returns false if the loop is stopped by StopWalk
-    fn walk_preorder(&self, callback: &fn(&str, &TreeEntry) -> WalkMode) -> bool
+    pub fn walk_preorder(&self, callback: &fn(&str, &TreeEntry) -> WalkMode) -> bool
     {
         unsafe {
             let fptr: *c_void = cast::transmute(&callback);
@@ -91,7 +91,7 @@ pub impl Tree {
     /// If the callback returns false, the loop stops
     ///
     /// The function returns false if the loop is stopped by callback
-    fn walk_postorder(&self, callback: &fn(&str, &TreeEntry) -> bool) -> bool
+    pub fn walk_postorder(&self, callback: &fn(&str, &TreeEntry) -> bool) -> bool
     {
         unsafe {
             let fptr: *c_void = cast::transmute(&callback);
@@ -177,9 +177,9 @@ impl Drop for Tree {
     }
 }
 
-pub impl TreeEntry {
+impl TreeEntry {
     /// Get the filename of a tree entry
-    fn name(&self) -> ~str
+    pub fn name(&self) -> ~str
     {
         unsafe {
             str::raw::from_c_str(ext::git_tree_entry_name(self.tree_entry))
@@ -187,21 +187,21 @@ pub impl TreeEntry {
     }
 
     /// Get the id of the object pointed by the entry
-    fn id(&self) -> &'self OID
+    pub fn id(&self) -> &'self OID
     {
         unsafe {
             cast::transmute(ext::git_tree_entry_id(self.tree_entry))
         }
     }
 
-    fn otype(&self) -> OType
+    pub fn otype(&self) -> OType
     {
         unsafe {
             ext::git_tree_entry_type(self.tree_entry)
         }
     }
 
-    fn filemode(&self) -> FileMode
+    pub fn filemode(&self) -> FileMode
     {
         unsafe {
             ext::git_tree_entry_filemode(self.tree_entry)
@@ -279,9 +279,9 @@ impl TotalOrd for TreeEntry {
     }
 }
 
-pub impl TreeBuilder {
+impl TreeBuilder {
     /// Clear all the entires in the builder
-    fn clear(&mut self)
+    pub fn clear(&mut self)
     {
         unsafe {
             ext::git_treebuilder_clear(self.bld);
@@ -289,7 +289,7 @@ pub impl TreeBuilder {
     }
 
     /// Get an entry from the builder from its filename
-    fn get(&self, filename: &str) -> ~TreeEntry
+    pub fn get(&self, filename: &str) -> ~TreeEntry
     {
         do str::as_c_str(filename) |c_filename| {
             unsafe {
@@ -314,7 +314,7 @@ pub impl TreeBuilder {
     /// filename: Filename of the entry
     /// id: SHA1 OID of the entry
     /// filemode: Folder attributes of the entry. This parameter must not be GIT_FILEMODE_NEW
-    fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) ->
+    pub fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) ->
         Result<~TreeEntry, (~str, GitError)>
     {
         do str::as_c_str(filename) |c_filename| {
@@ -332,7 +332,7 @@ pub impl TreeBuilder {
 
     /// Remove an entry from the builder by its filename
     /// return true if successful, false if the entry does not exist
-    fn remove(&mut self, filename: &str) -> bool
+    pub fn remove(&mut self, filename: &str) -> bool
     {
         do str::as_c_str(filename) |c_filename| {
             unsafe {
@@ -346,7 +346,7 @@ pub impl TreeBuilder {
     /// The `filter` closure will be called for each entry in the tree with a
     /// ref to the entry;
     /// if the closure returns false, the entry will be filtered (removed from the builder).
-    fn filter(&mut self, filter: &fn(&TreeEntry) -> bool)
+    pub fn filter(&mut self, filter: &fn(&TreeEntry) -> bool)
     {
         unsafe {
             ext::git_treebuilder_filter(self.bld, filter_cb, cast::transmute(&filter));
@@ -359,7 +359,7 @@ pub impl TreeBuilder {
     /// identifying SHA1 hash will be returned
     ///
     /// repo: Repository in which to store the object
-    fn write(&mut self, repo: &mut Repository) -> OID
+    pub fn write(&mut self, repo: &mut Repository) -> OID
     {
         let mut oid = OID { id: [0, ..20] };
         unsafe {
@@ -371,7 +371,7 @@ pub impl TreeBuilder {
     }
 
     /// Get the number of entries listed in a treebuilder
-    fn entrycount(&self) -> uint
+    pub fn entrycount(&self) -> uint
     {
         unsafe {
             ext::git_treebuilder_entrycount(self.bld) as uint
