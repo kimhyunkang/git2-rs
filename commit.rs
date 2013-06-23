@@ -1,5 +1,5 @@
 use std::libc::c_uint;
-use std::{ptr, cast};
+use std::ptr;
 use std::str::raw::from_c_str;
 use ext;
 use signature;
