@@ -231,7 +231,6 @@ pub extern {
 
     /* from <git2/repository.h> */
     pub fn git_repository_open(out: &mut *git_repository, path: *c_char) -> c_int;
-    pub fn git_repository_open_bare(out: &mut *git_repository, path: *c_char) -> c_int;
     pub fn git_repository_free(repo: *git_repository) -> c_void;
     pub fn git_repository_discover(path_out: *mut c_char, path_size: size_t,
                             start_path: *c_char, across_fs: c_int,
@@ -280,7 +279,7 @@ pub extern {
 
     /* from <git2/object.h> */
     pub fn git_object_free(object: *git_object) -> c_void;
-    pub fn git_object_id(obj: *git_object) -> *super::OID;
+    pub fn git_object_id(obj: *git_object) -> &super::OID;
     pub fn git_object_lookup(out: &mut *git_object, repo: *git_repository, id: &super::OID,
         otype: super::OType) -> c_int;
 
@@ -335,9 +334,6 @@ pub extern {
         payload: *c_void) -> c_int;
 
     /* from <git2/blob.h> */
-    pub fn git_blob_lookup(blob: &mut *git_blob, repo: *git_repository, id: &super::OID) -> c_int;
-    pub fn git_blob_free(blob: *git_blob) -> c_void;
-    pub fn git_blob_id(blob: *git_blob) -> &super::OID;
     pub fn git_blob_rawcontent(blob: *git_blob) -> *c_void;
     pub fn git_blob_rawsize(blob: *git_blob) -> git_off_t;
     pub fn git_blob_create_fromworkdir(id: &mut super::OID, repo: *git_repository,
@@ -384,7 +380,7 @@ pub unsafe fn git_commit_free(commit: *git_commit) -> c_void
 }
 
 #[inline]
-pub unsafe fn git_commit_id(commit: *git_commit) -> *super::OID
+pub unsafe fn git_commit_id(commit: *git_commit) -> &super::OID
 {
     git_object_id(commit)
 }
@@ -400,4 +396,24 @@ pub unsafe fn git_tree_free(tree: *git_tree) -> c_void
 pub unsafe fn git_tree_lookup(out: &mut *git_tree, repo: *git_repository, id: &super::OID) -> c_int
 {
     git_object_lookup(out, repo, id, super::GIT_OBJ_TREE)
+}
+
+/* from <git2/blob.h> */
+#[inline]
+pub unsafe fn git_blob_id(blob: *git_blob) -> &super::OID
+{
+    git_object_id(blob)
+}
+
+#[inline]
+pub unsafe fn git_blob_lookup(blob: &mut *git_blob, repo: *git_repository, id: &super::OID)
+    -> c_int
+{
+    git_object_lookup(blob, repo, id, super::GIT_OBJ_BLOB)
+}
+
+#[inline]
+pub unsafe fn git_blob_free(blob: *git_blob) -> c_void
+{
+	git_object_free(blob)
 }

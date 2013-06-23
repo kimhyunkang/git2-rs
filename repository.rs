@@ -25,25 +25,6 @@ pub fn open(path: &str) -> Result<@mut Repository, (~str, GitError)>
     }
 }
 
-/// Open a bare repository on the serverside.
-///
-/// This is a fast open for bare repositories that will come in handy
-/// if you're e.g. hosting git repositories and need to access them
-/// efficiently
-pub fn open_bare(path: &str) -> Result<@mut Repository, (~str, GitError)>
-{
-    unsafe {
-        let mut ptr_to_repo: *ext::git_repository = ptr::null();
-        do str::as_c_str(path) |c_path| {
-            if ext::git_repository_open_bare(&mut ptr_to_repo, c_path) == 0 {
-                Ok( @mut Repository { repo: ptr_to_repo } )
-            } else {
-                Err( last_error() )
-            }
-        }
-    }
-}
-
 /// Creates a new Git repository in the given folder.
 /// if is_bare is true, a Git repository without a working directory is
 /// created at the pointed path. If false, provided path will be

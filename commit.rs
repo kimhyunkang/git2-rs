@@ -10,7 +10,7 @@ impl Commit {
         unsafe {
             // OID pointer returned by git_commit_id is const pointer
             // so it's safe to use as long as self is alive
-            cast::transmute(ext::git_commit_id(self.commit))
+            ext::git_commit_id(self.commit)
         }
     }
 
