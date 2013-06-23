@@ -1,4 +1,9 @@
-use core::libc::{c_char, c_int, c_uint, c_void, size_t};
+use std::libc::{c_char, c_int, c_uint, c_void, size_t};
+use std::{ptr, cast};
+use std::io::Reader;
+use std::str::raw::{from_c_str, from_c_str_len};
+use std::vec::raw::mut_buf_as_slice;
+use std::vec::{as_mut_buf, as_imm_buf, as_const_buf};
 use ext;
 use signature;
 use super::*;
@@ -15,7 +20,7 @@ pub fn open(path: &str) -> Result<@mut Repository, (~str, GitError)>
 {
     unsafe {
         let mut ptr_to_repo: *ext::git_repository = ptr::null();
-        do str::as_c_str(path) |c_path| {
+        do path.as_c_str |c_path| {
             if ext::git_repository_open(&mut ptr_to_repo, c_path) == 0 {
                 Ok( @mut Repository { repo: ptr_to_repo } )
             } else {
@@ -34,7 +39,7 @@ pub fn init(path: &str, is_bare: bool) -> Result<@mut Repository, (~str, GitErro
 {
     unsafe {
         let mut ptr_to_repo: *ext::git_repository = ptr::null();
-        do str::as_c_str(path) |c_path| {
+        do path.as_c_str |c_path| {
             if ext::git_repository_init(&mut ptr_to_repo, c_path, is_bare as c_uint) == 0 {
                 Ok( @mut Repository { repo: ptr_to_repo } )
             } else {
@@ -61,14 +66,14 @@ pub fn init(path: &str, is_bare: bool) -> Result<@mut Repository, (~str, GitErro
 pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str) -> Option<~str>
 {
     unsafe {
-        let mut buf = vec::from_elem(PATH_BUF_SZ, 0u8 as c_char);
-        do vec::as_mut_buf(buf) |c_path, sz| {
-            do str::as_c_str(start_path) |c_start_path| {
-                do str::as_c_str(ceiling_dirs) |c_ceiling_dirs| {
+        let mut buf = std::vec::from_elem(PATH_BUF_SZ, 0u8 as c_char);
+        do as_mut_buf(buf) |c_path, sz| {
+            do start_path.as_c_str |c_start_path| {
+                do ceiling_dirs.as_c_str |c_ceiling_dirs| {
                     let result = ext::git_repository_discover(c_path, sz as size_t,
                                             c_start_path, across_fs as c_int, c_ceiling_dirs);
                     if result == 0 {
-                        Some( str::raw::from_buf(c_path as *u8) )
+                        Some( std::str::raw::from_buf(c_path as *u8) )
                     } else {
                         None
                     }
@@ -83,8 +88,8 @@ pub fn discover(start_path: &str, across_fs: bool, ceiling_dirs: &str) -> Option
 pub fn clone(url: &str, local_path: &str) -> Result<@mut Repository, (~str, GitError)> {
     unsafe {
         let mut ptr_to_repo: *ext::git_repository = ptr::null();
-        do str::as_c_str(url) |c_url| {
-            do str::as_c_str(local_path) |c_path| {
+        do url.as_c_str |c_url| {
+            do local_path.as_c_str |c_path| {
                 if ext::git_clone(&mut ptr_to_repo, c_url, c_path, ptr::null()) == 0 {
                     Ok( @mut Repository { repo: ptr_to_repo } )
                 } else {
@@ -103,7 +108,7 @@ impl Repository {
     pub fn path(&self) -> ~str {
         unsafe {
             let c_path = ext::git_repository_path(self.repo);
-            str::raw::from_c_str(c_path)
+            from_c_str(c_path)
         }
     }
 
@@ -116,7 +121,7 @@ impl Repository {
             if ptr::is_null(c_path) {
                 None
             } else {
-                Some(str::raw::from_c_str(c_path))
+                Some(from_c_str(c_path))
             }
         }
     }
@@ -144,7 +149,7 @@ impl Repository {
         unsafe {
             let mut ptr_to_ref: *ext::git_reference = ptr::null();
 
-            do str::as_c_str(name) |c_name| {
+            do name.as_c_str |c_name| {
                 if(ext::git_reference_lookup(&mut ptr_to_ref, self.repo, c_name) == 0) {
                     Some( ~Reference { c_ref: ptr_to_ref, repo_ptr: self } )
                 } else {
@@ -168,7 +173,7 @@ impl Repository {
     pub fn lookup_branch(@mut self, branch_name: &str, remote: bool) -> Option<~Reference> {
         let mut ptr: *ext::git_reference = ptr::null();
         let branch_type = if remote { ext::GIT_BRANCH_REMOTE } else { ext::GIT_BRANCH_LOCAL };
-        do str::as_c_str(branch_name) |c_name| {
+        do branch_name.as_c_str |c_name| {
             unsafe {
                 let res = ext::git_branch_lookup(&mut ptr, self.repo, c_name, branch_type);
                 match res {
@@ -275,38 +280,38 @@ impl Repository {
                             op: &fn(path: ~str, status_flags: c_uint) -> bool)
                             -> bool
     {
-        unsafe {
-            let fptr: *c_void = cast::transmute(&op);
-            let res = ext::git_status_foreach(self.repo, git_status_cb, fptr);
-            if res == 0 {
-                true
-            } else if res == ext::GIT_EUSER {
-                false
-            } else {
-                raise();
-                false
-            }
+        let fptr: *c_void = cast::transmute(&op);
+        let res = ext::git_status_foreach(self.repo, git_status_cb, fptr);
+        if res == 0 {
+            true
+        } else if res == ext::GIT_EUSER {
+            false
+        } else {
+            raise();
+            false
         }
     }
 
     /// Safer variant of each_status
     pub fn status(&self) -> ~[(~str, ~Status)] {
         let mut status_list:~[(~str, ~Status)] = ~[];
-        for self.each_status |path, status_flags| {
-            let status = ~Status {
-                index_new: status_flags & ext::GIT_STATUS_INDEX_NEW != 0,
-                index_modified: status_flags & ext::GIT_STATUS_INDEX_MODIFIED != 0,
-                index_deleted: status_flags & ext::GIT_STATUS_INDEX_DELETED != 0,
-                index_renamed: status_flags & ext::GIT_STATUS_INDEX_RENAMED != 0,
-                index_typechange: status_flags & ext::GIT_STATUS_INDEX_TYPECHANGE != 0,
-                wt_new: status_flags & ext::GIT_STATUS_WT_NEW != 0,
-                wt_modified: status_flags & ext::GIT_STATUS_WT_MODIFIED != 0,
-                wt_deleted: status_flags & ext::GIT_STATUS_WT_DELETED != 0,
-                wt_typechange: status_flags & ext::GIT_STATUS_WT_TYPECHANGE != 0,
-                ignored: status_flags & ext::GIT_STATUS_IGNORED != 0,
+        unsafe {
+            for self.each_status |path, status_flags| {
+                let status = ~Status {
+                    index_new: status_flags & ext::GIT_STATUS_INDEX_NEW != 0,
+                    index_modified: status_flags & ext::GIT_STATUS_INDEX_MODIFIED != 0,
+                    index_deleted: status_flags & ext::GIT_STATUS_INDEX_DELETED != 0,
+                    index_renamed: status_flags & ext::GIT_STATUS_INDEX_RENAMED != 0,
+                    index_typechange: status_flags & ext::GIT_STATUS_INDEX_TYPECHANGE != 0,
+                    wt_new: status_flags & ext::GIT_STATUS_WT_NEW != 0,
+                    wt_modified: status_flags & ext::GIT_STATUS_WT_MODIFIED != 0,
+                    wt_deleted: status_flags & ext::GIT_STATUS_WT_DELETED != 0,
+                    wt_typechange: status_flags & ext::GIT_STATUS_WT_TYPECHANGE != 0,
+                    ignored: status_flags & ext::GIT_STATUS_IGNORED != 0,
+                };
+                status_list.push((path, status));
             };
-            status_list.push((path, status));
-        };
+        }
         status_list
     }
 
@@ -327,7 +332,7 @@ impl Repository {
         let mut ptr: *ext::git_reference = ptr::null();
         let flag = force as c_int;
         unsafe {
-            do str::as_c_str(branch_name) |c_name| {
+            do branch_name.as_c_str |c_name| {
                 let res = ext::git_branch_create(&mut ptr, self.repo, c_name, target.commit, flag);
                 match res {
                     0 => Some( ~Reference { c_ref: ptr, repo_ptr: self } ),
@@ -361,13 +366,13 @@ impl Repository {
     pub fn upstream_name(&self, canonical_branch_name: &str) -> Option<~str>
     {
         let mut buf: [c_char, ..1024] = [0, ..1024];
-        do str::as_c_str(canonical_branch_name) |c_name| {
-            do vec::as_mut_buf(buf) |v, _len| {
+        do canonical_branch_name.as_c_str |c_name| {
+            do as_mut_buf(buf) |v, _len| {
                 unsafe {
                     let res = ext::git_branch_upstream_name(v, 1024, self.repo, c_name);
                     if res >= 0 {
                         let ptr: *c_char = cast::transmute(v);
-                        Some( str::raw::from_c_str_len(ptr, res as uint) )
+                        Some( from_c_str_len(ptr, res as uint) )
                     } else if res == ext::GIT_ENOTFOUND {
                         None
                     } else {
@@ -386,13 +391,13 @@ impl Repository {
         -> Result<~str, (~str, GitError)>
     {
         let mut buf: [c_char, ..1024] = [0, ..1024];
-        do str::as_c_str(canonical_branch_name) |c_name| {
-            do vec::as_mut_buf(buf) |v, _len| {
+        do canonical_branch_name.as_c_str |c_name| {
+            do as_mut_buf(buf) |v, _len| {
                 unsafe {
                     let res = ext::git_branch_remote_name(v, 1024, self.repo, c_name);
                     if res >= 0 {
                         let ptr: *c_char = cast::transmute(v);
-                        Ok( str::raw::from_c_str_len(ptr, res as uint) )
+                        Ok( from_c_str_len(ptr, res as uint) )
                     } else {
                         Err( last_error() )
                     }
@@ -420,7 +425,7 @@ impl Repository {
     {
         let mut oid = OID { id: [0, ..20] };
         let mut ptr: *ext::git_blob = ptr::null();
-        do str::as_c_str(relative_path) |c_path| {
+        do relative_path.as_c_str |c_path| {
             unsafe {
                 if ext::git_blob_create_fromworkdir(&mut oid, self.repo, c_path) == 0 {
                     if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
@@ -440,7 +445,7 @@ impl Repository {
     {
         let mut oid = OID { id: [0, ..20] };
         let mut ptr: *ext::git_blob = ptr::null();
-        do str::as_c_str(relative_path) |c_path| {
+        do relative_path.as_c_str |c_path| {
             unsafe {
                 if ext::git_blob_create_fromdisk(&mut oid, self.repo, c_path) == 0 {
                     if ext::git_blob_lookup(&mut ptr, self.repo, &oid) != 0 {
@@ -460,7 +465,7 @@ impl Repository {
     /// Provided the `hintpath` parameter is not None, its value
     /// will help to determine what git filters should be applied
     /// to the object before it can be placed to the object database.
-    pub fn blob_create_fromreader(@mut self, reader: &io::Reader, hintpath: Option<&str>)
+    pub fn blob_create_fromreader(@mut self, reader: &Reader, hintpath: Option<&str>)
         -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
@@ -468,7 +473,7 @@ impl Repository {
             let c_path =
             match hintpath {
                 None => ptr::null(),
-                Some(pathref) => str::as_c_str(pathref, |ptr| {ptr}),
+                Some(pathref) => pathref.as_c_str(|ptr| {ptr}),
             };
             let payload: *c_void = cast::transmute(&reader);
             if (ext::git_blob_create_fromchunks(&mut oid, self.repo, c_path, git_blob_chunk_cb,
@@ -488,7 +493,7 @@ impl Repository {
     pub fn blob_create_frombuffer(@mut self, buffer: &[u8]) -> Result<~Blob, (~str, GitError)>
     {
         let mut oid = OID { id: [0, ..20] };
-        do vec::as_imm_buf(buffer) |v, len| {
+        do as_imm_buf(buffer) |v, len| {
             unsafe {
                 let buf:*c_void = cast::transmute(v);
                 if ext::git_blob_create_frombuffer(&mut oid, self.repo, buf, len as u64) == 0 {
@@ -543,19 +548,19 @@ impl Repository {
             let c_ref = 
             match update_ref {
                 None => ptr::null(),
-                Some(uref) => str::as_c_str(uref, |ptr| {ptr}),
+                Some(uref) => uref.as_c_str(|ptr| {ptr}),
             };
             let c_author = signature::to_c_sig(author);
             let c_committer = signature::to_c_sig(committer);
             let c_encoding =
             match message_encoding {
                 None => ptr::null(),
-                Some(enc) => str::as_c_str(enc, |ptr| {ptr}),
+                Some(enc) => enc.as_c_str(|ptr| {ptr}),
             };
-            let c_message = str::as_c_str(message, |ptr| {ptr});
+            let c_message = message.as_c_str(|ptr| {ptr});
             let mut oid = OID { id: [0, .. 20] };
-            let c_parents = do vec::map(parents) |p| { p.commit };
-            do vec::as_const_buf(c_parents) |parent_ptr, len| {
+            let c_parents = do parents.map |p| { p.commit };
+            do as_const_buf(c_parents) |parent_ptr, len| {
                 let res = ext::git_commit_create(&mut oid, self.repo, c_ref,
                             &c_author, &c_committer, c_encoding, c_message, tree.tree,
                             len as c_int, parent_ptr);
@@ -573,7 +578,7 @@ extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -
     unsafe {
         let op_ptr: *&fn(~str, c_uint) -> bool = cast::transmute(payload);
         let op = *op_ptr;
-        let path_str = str::raw::from_c_str(path);
+        let path_str = from_c_str(path);
         if op(path_str, status_flags) {
             0
         } else {
@@ -582,12 +587,12 @@ extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -
     }
 }
 
-extern fn git_blob_chunk_cb(content: *mut u8, max_length: size_t, payload: *&io::Reader) -> c_int
+extern fn git_blob_chunk_cb(content: *mut u8, max_length: size_t, payload: *&Reader) -> c_int
 {
     let len = max_length as uint;
     unsafe {
         let reader = *payload;
-        do vec::raw::mut_buf_as_slice(content, len) |v| {
+        do mut_buf_as_slice(content, len) |v| {
             if reader.eof() {
                 0
             } else {
@@ -603,7 +608,7 @@ extern fn git_branch_foreach_cb(branch_name: *c_char, branch_type: ext::git_bran
     unsafe {
         let op_ptr: *&fn(name: &str, is_remote: bool) -> bool = cast::transmute(payload);
         let op = *op_ptr;
-        let branch_str = str::raw::from_c_str(branch_name);
+        let branch_str = from_c_str(branch_name);
         let is_remote = (branch_type == ext::GIT_BRANCH_REMOTE);
         if op(branch_str, is_remote) {
             0

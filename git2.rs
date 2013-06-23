@@ -27,7 +27,7 @@ pub unsafe fn raise() {
 
 pub unsafe fn last_error() -> (~str, GitError) {
     let err = ext::giterr_last();
-    let message = str::raw::from_c_str((*err).message);
+    let message = std::str::raw::from_c_str((*err).message);
     let klass = (*err).klass;
     (message, klass)
 }
@@ -93,9 +93,9 @@ impl TreeBuilder {
     /// The tree builder will start with no entries and will have to be filled manually.
     pub fn new() -> TreeBuilder
     {
-        let mut bld:*ext::git_treebuilder = ptr::null();
+        let mut bld:*ext::git_treebuilder = std::ptr::null();
         unsafe {
-            if ext::git_treebuilder_create(&mut bld, ptr::null()) == 0 {
+            if ext::git_treebuilder_create(&mut bld, std::ptr::null()) == 0 {
                 TreeBuilder { bld: bld }
             } else {
                 fail!(~"failed to create treebuilder")
@@ -107,7 +107,7 @@ impl TreeBuilder {
     /// The tree builder will be initialized with the entries of the given tree.
     pub fn from_tree(tree: &Tree) -> TreeBuilder
     {
-        let mut bld:*ext::git_treebuilder = ptr::null();
+        let mut bld:*ext::git_treebuilder = std::ptr::null();
         unsafe {
             if ext::git_treebuilder_create(&mut bld, tree.tree) == 0 {
                 TreeBuilder { bld: bld }
@@ -141,7 +141,7 @@ pub struct Signature {
 }
 
 pub struct OID {
-    pub id: [core::libc::c_char, ..20],
+    pub id: [std::libc::c_char, ..20],
 }
 
 /// Status flags for a single file.

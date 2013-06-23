@@ -1,11 +1,11 @@
-use core::libc::c_int;
-
+use std::libc::c_int;
+use std::str::raw::from_c_str;
 use ext;
 use super::{Signature, Time};
 
 pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
-    do str::as_c_str(sig.name) |c_name| {
-        do str::as_c_str(sig.email) |c_email| {
+    do sig.name.as_c_str |c_name| {
+        do sig.email.as_c_str |c_email| {
             ext::git_signature {
                 name: c_name,
                 email: c_email,
@@ -20,8 +20,8 @@ pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
 
 pub unsafe fn from_c_sig(c_sig: *ext::git_signature) -> Signature {
     Signature {
-        name: str::raw::from_c_str((*c_sig).name),
-        email: str::raw::from_c_str((*c_sig).email),
+        name: from_c_str((*c_sig).name),
+        email: from_c_str((*c_sig).email),
         when: Time { time: (*c_sig).when.time, offset: (*c_sig).when.offset as int }
     }
 }

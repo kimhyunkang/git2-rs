@@ -1,11 +1,13 @@
-use core::libc::c_uint;
+use std::libc::c_uint;
+use std::ptr;
+use std::str::raw::from_c_str;
 use ext;
 use signature;
 use super::*;
 
 impl Commit {
     /// get the id of the commit
-    pub fn id(&self) -> &'self OID
+    pub fn id<'r>(&self) -> &'r OID
     {
         unsafe {
             // OID pointer returned by git_commit_id is const pointer
@@ -24,7 +26,7 @@ impl Commit {
             if encoding == ptr::null() {
                 None
             } else {
-                Some(str::raw::from_c_str(encoding))
+                Some(from_c_str(encoding))
             }
         }
     }
@@ -34,7 +36,7 @@ impl Commit {
     {
         unsafe {
             let message = ext::git_commit_message(self.commit);
-            str::raw::from_c_str(message)
+            from_c_str(message)
         }
     }
 
@@ -74,9 +76,9 @@ impl Commit {
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
-            let mut parents:~[~Commit] = vec::with_capacity(len);
+            let mut parents:~[~Commit] = std::vec::with_capacity(len);
             let mut success = true;
-            do uint::range(0, len) |i| {
+            do std::uint::iterate(0, len) |i| {
                 let mut commit_ptr:*ext::git_commit = ptr::null();
                 if ext::git_commit_parent(&mut commit_ptr, self.commit, i as c_uint) == 0 {
                     let commit = ~Commit { commit: commit_ptr, owner: self.owner };
@@ -86,7 +88,7 @@ impl Commit {
                     success = false;
                 };
                 success
-            }
+            };
 
             if success {
                 return parents;
@@ -123,9 +125,9 @@ impl Commit {
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
-            let mut parents:~[~OID] = vec::with_capacity(len);
+            let mut parents:~[~OID] = std::vec::with_capacity(len);
             let mut success = true;
-            do uint::range(0, len) |i| {
+            do std::uint::iterate(0, len) |i| {
                 let mut oid = OID { id: [0, .. 20] };
                 let res_ptr = ext::git_commit_parent_id(self.commit, i as c_uint);
                 if res_ptr == ptr::null() {
@@ -136,7 +138,7 @@ impl Commit {
                     parents.push(~oid);
                 }
                 success
-            }
+            };
 
             if success {
                 return parents;

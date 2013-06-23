@@ -1,4 +1,6 @@
-use core::libc::{c_char, c_int};
+use std::libc::{c_char, c_int};
+use std::ptr;
+use std::str::raw::from_c_str;
 use super::{Reference, OID, raise};
 use ext;
 
@@ -25,7 +27,7 @@ impl Reference {
         unsafe {
             let mut ptr_to_name: *c_char = ptr::null();
             if ext::git_branch_name(&mut ptr_to_name, self.c_ref) == 0 {
-                Some(str::raw::from_c_str(ptr_to_name))
+                Some(from_c_str(ptr_to_name))
             } else {
                 None
             }
@@ -52,7 +54,7 @@ impl Reference {
         let mut ptr: *ext::git_reference = ptr::null();
         let flag = force as c_int;
         unsafe {
-            do str::as_c_str(new_branch_name) |c_name| {
+            do new_branch_name.as_c_str |c_name| {
                 let res = ext::git_branch_move(&mut ptr, self.c_ref, c_name, flag);
                 match res {
                     0 => Some( ~Reference { c_ref: ptr, repo_ptr: self.repo_ptr } ),
@@ -86,7 +88,7 @@ impl Reference {
         let c_name =
         match upstream_name {
             None => ptr::null(),
-            Some(nameref) => str::as_c_str(nameref, |ptr| {ptr}),
+            Some(nameref) => nameref.as_c_str(|ptr| {ptr}),
         };
 
         unsafe {

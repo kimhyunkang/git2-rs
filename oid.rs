@@ -1,13 +1,13 @@
-use core::libc::c_char;
-
+use std::libc::c_char;
+use std::{from_str, to_str};
+use std::{vec, cast};
 use super::{OID, raise};
 use ext;
-use core::{from_str, to_str};
 
 fn from_str(s: &str) -> OID {
     unsafe {
         let mut oid = OID { id: [0, .. 20] };
-        do str::as_c_str(s) |c_str| {
+        do s.as_c_str |c_str| {
             if ext::git_oid_fromstr(&mut oid, c_str) != 0 {
                 raise()
             }
@@ -20,7 +20,7 @@ impl from_str::FromStr for OID {
     fn from_str(s: &str) -> Option<OID> {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
-            do str::as_c_str(s) |c_str| {
+            do s.as_c_str |c_str| {
                 if ext::git_oid_fromstr(&mut oid, c_str) == 0 {
                     Some(oid)
                 } else {

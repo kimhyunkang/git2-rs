@@ -1,4 +1,5 @@
 extern mod git2;
+use std::os;
 
 fn main_usage(program: &str) {
     println(fmt!("usage: %s <command> [<args>]", program));
@@ -20,7 +21,7 @@ fn main() {
     }
 
     let cmd = copy args[1];
-    let cmd_args = vec::slice(args, 2, args.len());
+    let cmd_args = args.slice(2, args.len());
 
     git2::threads_init();
 

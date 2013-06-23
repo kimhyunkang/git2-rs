@@ -1,4 +1,4 @@
-extern mod std;
+extern mod extra;
 extern mod git2;
 
 #[test]
@@ -65,7 +65,7 @@ fn commit_apis() {
     let oid = git2::oid::from_str(&"21002f5d3f411fe990e13604273a51cd598a4a51");
     let time_str = "Tue, 11 Jun 2013 19:14:48";
     let rfc822z = "%a, %d %b %Y %T";
-    let tm = std::time::strptime(time_str, rfc822z).unwrap();
+    let tm = extra::time::strptime(time_str, rfc822z).unwrap();
     let signature = git2::Signature {
         name: ~"김현강",
         email: ~"kimhyunkang@gmail.com",
@@ -99,7 +99,7 @@ fn commit() {
 
     let time_str = "Sat, 15 Jun 2013 03:40:22";
     let rfc822z = "%a, %d %b %Y %T";
-    let tm = std::time::strptime(time_str, rfc822z).unwrap();
+    let tm = extra::time::strptime(time_str, rfc822z).unwrap();
     let sig = git2::Signature {
         name: ~"김현강",
         email: ~"kimhyunkang@gmail.com",
@@ -110,7 +110,7 @@ fn commit() {
     };
 
     let text = "blob text\n";
-    let blob = repo.blob_create_frombuffer(str::as_bytes_slice(text)).unwrap();
+    let blob = repo.blob_create_frombuffer(text.as_bytes()).unwrap();
 
     let mut treebuilder = git2::TreeBuilder::from_tree(parent.tree());
     treebuilder.insert(&"test_blob.txt", blob.id(), git2::GIT_FILEMODE_BLOB);
@@ -121,7 +121,7 @@ fn commit() {
     };
 
     let message = ~"commit test";
-    let oid = repo.commit(None, &sig, &sig, None, message, tree, ~[parent]);
+    let oid = repo.commit(None, &sig, &sig, None, message, tree, [parent]);
     match repo.lookup_commit(&oid) {
         None => fail!(~"failed to create commit"),
         Some(new_commit) => {

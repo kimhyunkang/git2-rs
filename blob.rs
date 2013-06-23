@@ -1,9 +1,11 @@
 use super::{Blob, OID};
+use std::cast;
+use std::vec::raw::buf_as_slice;
 use ext;
 
 impl Blob {
     /// get the id of the blob
-    pub fn id(&self) -> &'self OID
+    pub fn id<'r>(&self) -> &'r OID
     {
         unsafe {
             // OID pointer returned by git_blob_id is const pointer
@@ -24,7 +26,7 @@ impl Blob {
             if(size < 0) {
                 fail!(~"negative blob size")
             }
-            vec::raw::buf_as_slice(ptr, size as uint, f)
+            buf_as_slice(ptr, size as uint, f)
         }
     }
 
