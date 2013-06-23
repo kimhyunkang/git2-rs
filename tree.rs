@@ -157,6 +157,7 @@ impl BaseIter<TreeEntry> for Tree {
                 if !blk(&entry) {
                     break
                 }
+                idx += 1;
             }
         }
     }
