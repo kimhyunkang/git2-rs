@@ -20,7 +20,7 @@ impl GitIndex {
     /// raises git_error on error
     pub fn add_bypath(&mut self, path: &str) {
         unsafe {
-            do str::as_c_str(path) |c_path| {
+            do path.as_c_str |c_path| {
                 if ext::git_index_add_bypath(self.index, c_path) != 0 {
                     raise()
                 }
@@ -39,7 +39,7 @@ impl GitIndex {
     /// raises git_error on error
     pub fn remove_bypath(&mut self, path: &str) {
         unsafe {
-            do str::as_c_str(path) |c_path| {
+            do path.as_c_str |c_path| {
                 if ext::git_index_remove_bypath(self.index, c_path) != 0 {
                     raise();
                 }
@@ -86,7 +86,7 @@ impl GitIndex {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
             if ext::git_index_write_tree(&mut oid, self.index) == 0 {
-                let mut ptr_to_tree: *ext::git_tree = ptr::null();
+                let mut ptr_to_tree: *ext::git_tree = std::ptr::null();
                 if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, &oid) == 0 {
                     Ok( ~Tree { tree: ptr_to_tree, owner: self.owner } )
                 } else {

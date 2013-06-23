@@ -1,10 +1,12 @@
 use std::libc::{size_t, c_void, c_char, c_int};
+use std::{ptr, cast};
+use std::str::raw::from_c_str;
 use super::*;
 use ext;
 
 impl Tree {
     /// Get the id of a tree.
-    pub fn id(&self) -> &'self OID
+    pub fn id<'r>(& self) -> &'r OID
     {
         unsafe {
             cast::transmute(ext::git_tree_id(self.tree))
@@ -14,7 +16,7 @@ impl Tree {
     /// Lookup a tree entry by its filename
     pub fn entry_byname(&self, filename: &str) -> Option<~TreeEntry>
     {
-        do str::as_c_str(filename) |c_filename| {
+        do filename.as_c_str |c_filename| {
             unsafe {
                 let entry_ptr = ext::git_tree_entry_byname(self.tree, c_filename);
                 if entry_ptr == ptr::null() {
@@ -44,7 +46,7 @@ impl Tree {
     /// given its relative path.
     pub fn entry_bypath(&self, path: &str) -> Option<~TreeEntry>
     {
-        do str::as_c_str(path) |c_path| {
+        do path.as_c_str |c_path| {
             unsafe {
                 let mut entry_ptr:*ext::git_tree_entry = ptr::null();
                 if ext::git_tree_entry_bypath(&mut entry_ptr, self.tree, c_path) == 0 {
@@ -119,7 +121,7 @@ extern fn pre_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_vo
     unsafe {
         let op_ptr: *&fn(&str, &TreeEntry) -> WalkMode = cast::transmute(payload);
         let op: &fn(&str, &TreeEntry) -> WalkMode = *op_ptr;
-        let root_str = str::raw::from_c_str(root);
+        let root_str = from_c_str(root);
         let entry = TreeEntry { tree_entry: entry, owned: false };
         op(root_str, &entry) as c_int
     }
@@ -130,7 +132,7 @@ extern fn post_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_v
     unsafe {
         let op_ptr: *&fn(&str, &TreeEntry) -> bool = cast::transmute(payload);
         let op: &fn(&str, &TreeEntry) -> bool = *op_ptr;
-        let root_str = str::raw::from_c_str(root);
+        let root_str = from_c_str(root);
         let entry = TreeEntry { tree_entry: entry, owned: false };
         if op(root_str, &entry) {
             // continue
@@ -144,7 +146,7 @@ extern fn post_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_v
 
 impl BaseIter<TreeEntry> for Tree {
     /// traverse Tree with internal storage order
-    fn each(&self, blk: &fn(v: &TreeEntry) -> bool) {
+    fn each(&self, blk: &fn(v: &TreeEntry) -> bool) -> bool {
         unsafe {
             let size = ext::git_tree_entrycount(self.tree);
             let mut idx:size_t = 0;
@@ -155,10 +157,11 @@ impl BaseIter<TreeEntry> for Tree {
                 }
                 let entry = TreeEntry { tree_entry: entry_ptr, owned: false };
                 if !blk(&entry) {
-                    break
+                    return false;
                 }
                 idx += 1;
             }
+            return true;
         }
     }
 
@@ -183,12 +186,12 @@ impl TreeEntry {
     pub fn name(&self) -> ~str
     {
         unsafe {
-            str::raw::from_c_str(ext::git_tree_entry_name(self.tree_entry))
+            from_c_str(ext::git_tree_entry_name(self.tree_entry))
         }
     }
 
     /// Get the id of the object pointed by the entry
-    pub fn id(&self) -> &'self OID
+    pub fn id<'r>(&self) -> &'r OID
     {
         unsafe {
             cast::transmute(ext::git_tree_entry_id(self.tree_entry))
@@ -267,15 +270,13 @@ impl Ord for TreeEntry {
 
 impl TotalOrd for TreeEntry {
     fn cmp(&self, other: &TreeEntry) -> Ordering {
-        unsafe {
-            let comp = tree_entry_cmp(self, other);
-            if comp < 0 {
-                Less
-            } else if comp == 0 {
-                Equal
-            } else {
-                Greater
-            }
+        let comp = tree_entry_cmp(self, other);
+        if comp < 0 {
+            Less
+        } else if comp == 0 {
+            Equal
+        } else {
+            Greater
         }
     }
 }
@@ -292,7 +293,7 @@ impl TreeBuilder {
     /// Get an entry from the builder from its filename
     pub fn get(&self, filename: &str) -> ~TreeEntry
     {
-        do str::as_c_str(filename) |c_filename| {
+        do filename.as_c_str |c_filename| {
             unsafe {
                 let entry_ptr = ext::git_treebuilder_get(self.bld, c_filename);
                 ~TreeEntry { tree_entry: entry_ptr, owned: false }
@@ -318,7 +319,7 @@ impl TreeBuilder {
     pub fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) ->
         Result<~TreeEntry, (~str, GitError)>
     {
-        do str::as_c_str(filename) |c_filename| {
+        do filename.as_c_str |c_filename| {
             unsafe {
                 let mut entry_ptr:*ext::git_tree_entry = ptr::null();
                 if(ext::git_treebuilder_insert(&mut entry_ptr, self.bld, c_filename, id,
@@ -335,7 +336,7 @@ impl TreeBuilder {
     /// return true if successful, false if the entry does not exist
     pub fn remove(&mut self, filename: &str) -> bool
     {
-        do str::as_c_str(filename) |c_filename| {
+        do filename.as_c_str |c_filename| {
             unsafe {
                 ext::git_treebuilder_remove(self.bld, c_filename) == 0
             }
