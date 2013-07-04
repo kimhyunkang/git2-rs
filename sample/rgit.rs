@@ -40,7 +40,7 @@ fn main() {
     }
 }
 
-fn get_current_repo() -> @mut git2::Repository {
+fn get_current_repo() -> git2::Repository {
     let dir = git2::repository::discover(&".", false, &"").get();
     git2::repository::open(dir).unwrap()
 }
@@ -161,7 +161,7 @@ fn cmd_add(program: &str, args: &[~str]) {
     } else {
         let path = copy args[0];
         let repo = get_current_repo();
-        let mut index = repo.index().unwrap();
+        let index = repo.index().unwrap();
         index.add_bypath(path);
         index.write();
     }
@@ -177,7 +177,7 @@ fn cmd_rm(program: &str, args: &[~str]) {
     } else {
         let path = copy args[0];
         let repo = get_current_repo();
-        let mut index = repo.index().unwrap();
+        let index = repo.index().unwrap();
         index.remove_bypath(path);
         index.write();
     }

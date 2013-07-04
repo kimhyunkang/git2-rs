@@ -3,7 +3,7 @@ use std::cast;
 use std::vec::raw::buf_as_slice;
 use ext;
 
-impl Blob {
+impl<'self> Blob<'self> {
     /// get the id of the blob
     pub fn id<'r>(&self) -> &'r OID
     {
@@ -44,7 +44,7 @@ impl Blob {
 }
 
 #[unsafe_destructor]
-impl Drop for Blob {
+impl<'self> Drop for Blob<'self> {
     fn finalize(&self) {
         unsafe {
             ext::git_blob_free(self.blob);

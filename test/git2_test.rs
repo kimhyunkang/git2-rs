@@ -112,9 +112,9 @@ fn commit() {
     let text = "blob text\n";
     let blob = repo.blob_create_frombuffer(text.as_bytes()).unwrap();
 
-    let mut treebuilder = git2::TreeBuilder::from_tree(parent.tree());
+    let treebuilder = git2::TreeBuilder::from_tree(parent.tree());
     treebuilder.insert(&"test_blob.txt", blob.id(), git2::GIT_FILEMODE_BLOB);
-    let tree_id = treebuilder.write(repo);
+    let tree_id = treebuilder.write(&repo);
     let tree = match repo.lookup_tree(&tree_id) {
         None => fail!(~"tree does not exist"),
         Some(t) => t,

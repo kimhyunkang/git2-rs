@@ -62,19 +62,19 @@ pub struct Repository {
     priv repo: *ext::git_repository,
 }
 
-pub struct Reference {
+pub struct Reference<'self> {
     priv c_ref: *ext::git_reference,
-    priv repo_ptr: @mut Repository,
+    priv owner: &'self Repository,
 }
 
-pub struct GitIndex {
+pub struct GitIndex<'self> {
     priv index: *ext::git_index,
-    priv owner: @mut Repository,
+    priv owner: &'self Repository,
 }
 
-pub struct Tree {
+pub struct Tree<'self> {
     priv tree: *ext::git_tree,
-    priv owner: @mut Repository,
+    priv owner: &'self Repository,
 }
 
 pub struct TreeEntry {
@@ -118,14 +118,14 @@ impl TreeBuilder {
     }
 }
 
-pub struct Blob {
+pub struct Blob<'self> {
     priv blob: *ext::git_blob,
-    priv owner: @mut Repository,
+    priv owner: &'self Repository,
 }
 
-pub struct Commit {
+pub struct Commit<'self> {
     priv commit: *ext::git_commit,
-    priv owner: @mut Repository,
+    priv owner: &'self Repository,
 }
 
 pub struct Time {

@@ -5,7 +5,7 @@ use super::{Reference, OID, raise};
 use ext;
 
 /// Delete the branch reference.
-pub fn branch_delete(reference: ~Reference) {
+pub fn branch_delete(reference: &Reference) {
     unsafe {
         if ext::git_branch_delete(reference.c_ref) != 0 {
             raise();
@@ -13,7 +13,7 @@ pub fn branch_delete(reference: ~Reference) {
     }
 }
 
-impl Reference {
+impl<'self> Reference<'self> {
     ///
     /// Return the name of the given local or remote branch.
     ///
@@ -49,7 +49,7 @@ impl Reference {
     ///
     /// The new branch name will be checked for validity.
     /// See `git_tag_create()` for rules about valid names.
-    pub fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<~Reference>
+    pub fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<Reference<'self>>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         let flag = force as c_int;
@@ -57,7 +57,7 @@ impl Reference {
             do new_branch_name.as_c_str |c_name| {
                 let res = ext::git_branch_move(&mut ptr, self.c_ref, c_name, flag);
                 match res {
-                    0 => Some( ~Reference { c_ref: ptr, repo_ptr: self.repo_ptr } ),
+                    0 => Some( Reference { c_ref: ptr, owner: self.owner } ),
                     ext::GIT_EINVALIDSPEC => None,
                     _ => { raise(); None },
                 }
@@ -67,13 +67,13 @@ impl Reference {
 
     /// Return the reference supporting the remote tracking branch,
     /// returns None when the upstream is not found
-    pub fn upstream(&self) -> Option<~Reference>
+    pub fn upstream(&self) -> Option<Reference<'self>>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         unsafe {
             let res = ext::git_branch_upstream(&mut ptr, self.c_ref);
             match res {
-                0 => Some( ~Reference { c_ref: ptr, repo_ptr: self.repo_ptr } ),
+                0 => Some( Reference { c_ref: ptr, owner: self.owner } ),
                 ext::GIT_ENOTFOUND => None,
                 _ => { raise(); None },
             }
@@ -83,7 +83,7 @@ impl Reference {
     /// Set the upstream configuration for a given local branch
     /// upstream_name: remote-tracking or local branch to set as
     ///     upstream. Pass None to unset.
-    pub fn set_upstream(&mut self, upstream_name: Option<&str>)
+    pub fn set_upstream(&self, upstream_name: Option<&str>)
     {
         let c_name =
         match upstream_name {
@@ -121,7 +121,7 @@ impl Reference {
 }
 
 #[unsafe_destructor]
-impl Drop for Reference {
+impl<'self> Drop for Reference<'self> {
     fn finalize(&self) {
         unsafe {
             ext::git_reference_free(self.c_ref);

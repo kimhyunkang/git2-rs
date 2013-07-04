@@ -5,7 +5,7 @@ use ext;
 use signature;
 use super::*;
 
-impl Commit {
+impl<'self> Commit<'self> {
     /// get the id of the commit
     pub fn id<'r>(&self) -> &'r OID
     {
@@ -59,7 +59,7 @@ impl Commit {
     }
 
     /// Get the tree pointed to by a commit.
-    pub fn tree(&self) -> ~Tree
+    pub fn tree<'r>(&'r self) -> ~Tree<'r>
     {
         unsafe {
             let mut tree:*ext::git_tree = ptr::null();
@@ -72,7 +72,7 @@ impl Commit {
     }
 
     /// Get the parents of the commit.
-    pub fn parents(&self) -> ~[~Commit]
+    pub fn parents<'r>(&'r self) -> ~[~Commit<'r>]
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
@@ -103,7 +103,7 @@ impl Commit {
     ///
     /// Passing `0` as the generation number returns another instance of the
     /// base commit itself.
-    pub fn nth_gen_ancestor(&self, n: uint) -> Option<~Commit>
+    pub fn nth_gen_ancestor<'r>(&'r self, n: uint) -> Option<~Commit<'r>>
     {
         let mut ancestor: *ext::git_commit = ptr::null();
         unsafe {
@@ -150,7 +150,7 @@ impl Commit {
 }
 
 #[unsafe_destructor]
-impl Drop for Commit {
+impl<'self> Drop for Commit<'self> {
     fn finalize(&self) {
         unsafe {
             ext::git_commit_free(self.commit);

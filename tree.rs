@@ -4,7 +4,7 @@ use std::str::raw::from_c_str;
 use super::*;
 use ext;
 
-impl Tree {
+impl<'self> Tree<'self> {
     /// Get the id of a tree.
     pub fn id<'r>(& self) -> &'r OID
     {
@@ -144,7 +144,7 @@ extern fn post_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_v
     }
 }
 
-impl BaseIter<TreeEntry> for Tree {
+impl<'self> BaseIter<TreeEntry> for Tree<'self> {
     /// traverse Tree with internal storage order
     fn each(&self, blk: &fn(v: &TreeEntry) -> bool) -> bool {
         unsafe {
@@ -173,7 +173,7 @@ impl BaseIter<TreeEntry> for Tree {
 }
 
 #[unsafe_destructor]
-impl Drop for Tree {
+impl<'self> Drop for Tree<'self> {
     fn finalize(&self) {
         unsafe {
             ext::git_tree_free(self.tree);
@@ -283,7 +283,7 @@ impl TotalOrd for TreeEntry {
 
 impl TreeBuilder {
     /// Clear all the entires in the builder
-    pub fn clear(&mut self)
+    pub fn clear(&self)
     {
         unsafe {
             ext::git_treebuilder_clear(self.bld);
@@ -316,7 +316,7 @@ impl TreeBuilder {
     /// filename: Filename of the entry
     /// id: SHA1 OID of the entry
     /// filemode: Folder attributes of the entry. This parameter must not be GIT_FILEMODE_NEW
-    pub fn insert(&mut self, filename: &str, id: &OID, filemode: FileMode) ->
+    pub fn insert(&self, filename: &str, id: &OID, filemode: FileMode) ->
         Result<~TreeEntry, (~str, GitError)>
     {
         do filename.as_c_str |c_filename| {
@@ -334,7 +334,7 @@ impl TreeBuilder {
 
     /// Remove an entry from the builder by its filename
     /// return true if successful, false if the entry does not exist
-    pub fn remove(&mut self, filename: &str) -> bool
+    pub fn remove(&self, filename: &str) -> bool
     {
         do filename.as_c_str |c_filename| {
             unsafe {
@@ -348,7 +348,7 @@ impl TreeBuilder {
     /// The `filter` closure will be called for each entry in the tree with a
     /// ref to the entry;
     /// if the closure returns false, the entry will be filtered (removed from the builder).
-    pub fn filter(&mut self, filter: &fn(&TreeEntry) -> bool)
+    pub fn filter(&self, filter: &fn(&TreeEntry) -> bool)
     {
         unsafe {
             ext::git_treebuilder_filter(self.bld, filter_cb, cast::transmute(&filter));
@@ -361,7 +361,7 @@ impl TreeBuilder {
     /// identifying SHA1 hash will be returned
     ///
     /// repo: Repository in which to store the object
-    pub fn write(&mut self, repo: &mut Repository) -> OID
+    pub fn write(&self, repo: &Repository) -> OID
     {
         let mut oid = OID { id: [0, ..20] };
         unsafe {

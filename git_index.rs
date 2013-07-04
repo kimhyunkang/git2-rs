@@ -1,7 +1,7 @@
 use super::*;
 use ext;
 
-impl GitIndex {
+impl<'self> GitIndex<'self> {
     /// Add or update an index entry from a file on disk
     ///
     /// The file `path` must be relative to the repository's
@@ -18,7 +18,7 @@ impl GitIndex {
     /// the conflict will be moved to the "resolve undo" (REUC) section.
     ///
     /// raises git_error on error
-    pub fn add_bypath(&mut self, path: &str) {
+    pub fn add_bypath(&self, path: &str) {
         unsafe {
             do path.as_c_str |c_path| {
                 if ext::git_index_add_bypath(self.index, c_path) != 0 {
@@ -37,7 +37,7 @@ impl GitIndex {
     /// the conflict will be moved to the "resolve undo" (REUC) section.
     ///
     /// raises git_error on error
-    pub fn remove_bypath(&mut self, path: &str) {
+    pub fn remove_bypath(&self, path: &str) {
         unsafe {
             do path.as_c_str |c_path| {
                 if ext::git_index_remove_bypath(self.index, c_path) != 0 {
@@ -51,7 +51,7 @@ impl GitIndex {
     ///
     /// The current index contents will be replaced by the specified tree.
     /// raises git_error on error
-    pub fn read_tree(&mut self, tree: &Tree) {
+    pub fn read_tree(&self, tree: &Tree) {
         unsafe {
             if ext::git_index_read_tree(self.index, tree.tree) != 0 {
                 raise()
@@ -82,7 +82,7 @@ impl GitIndex {
     /// to an existing repository.
     ///
     /// The index must not contain any file in conflict.
-    pub fn write_tree(&self) -> Result<~Tree, (~str, GitError)> {
+    pub fn write_tree<'r>(&'r self) -> Result<~Tree<'r>, (~str, GitError)> {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
             if ext::git_index_write_tree(&mut oid, self.index) == 0 {
@@ -101,7 +101,7 @@ impl GitIndex {
     /// Clear the contents (all the entries) of an index object.
     /// This clears the index object in memory; changes must be manually
     /// written to disk for them to take effect.
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         unsafe {
             ext::git_index_clear(self.index);
         }
@@ -109,7 +109,7 @@ impl GitIndex {
 }
 
 #[unsafe_destructor]
-impl Drop for GitIndex {
+impl<'self> Drop for GitIndex<'self> {
     fn finalize(&self) {
         unsafe {
             ext::git_index_free(self.index);
