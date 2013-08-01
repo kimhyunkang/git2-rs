@@ -189,15 +189,15 @@ pub static GIT_BRANCH_LOCAL: git_branch_t = 1;
 pub static GIT_BRANCH_REMOTE: git_branch_t = 2;
 
 // the storage size of these types are unknown
-pub type git_repository = c_void;
-pub type git_reference = c_void;
-pub type git_tree = c_void;
-pub type git_tree_entry = c_void;
-pub type git_treebuilder = c_void;
-pub type git_index = c_void;
-pub type git_commit = c_void;
-pub type git_blob = c_void;
-pub type git_object = c_void;
+pub struct git_repository;
+pub struct git_reference;
+pub struct git_tree_entry;
+pub struct git_treebuilder;
+pub struct git_index;
+pub struct git_object;
+pub type git_tree = git_object;
+pub type git_commit = git_object;
+pub type git_blob = git_object;
 
 #[cfg(target_os = "android")]
 #[cfg(target_os = "freebsd")]
