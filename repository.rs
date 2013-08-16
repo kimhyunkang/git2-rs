@@ -575,6 +575,73 @@ impl Repository {
             }
         }
     }
+
+    ///
+    /// Create a diff list with the difference between two tree objects.
+    ///
+    /// This is equivalent to `git diff <old-tree> <new-tree>`
+    ///
+    /// The first tree will be used for the "old_file" side of the delta and the
+    /// second tree will be used for the "new_file" side of the delta.  You can
+    /// pass None to indicate an empty tree, although it is an error to pass
+    /// None for both the `old_tree` and `new_tree`.
+    ///
+    /// @param diff Output pointer to a git_diff_list pointer to be allocated.
+    /// @param repo The repository containing the trees.
+    /// @param old_tree A git_tree object to diff from, or NULL for empty tree.
+    /// @param new_tree A git_tree object to diff to, or NULL for empty tree.
+    /// @param opts Structure with options to influence diff or NULL for defaults.
+    ///
+    pub fn diff_tree_to_tree<'r>(&'r self, old_tree: Option<~Tree>, new_tree: Option<~Tree>,
+            opts: &diff::DiffOption, notify_cb: &fn(DiffList, DiffDelta, ~str) -> WalkMode)
+        -> Result<~DiffList, (~str, GitError)>
+    {
+        unsafe {
+            let old_t = match old_tree {
+                None => ptr::null(),
+                Some(t) => t.tree,
+            };
+
+            let new_t = match new_tree {
+                None => ptr::null(),
+                Some(t) => t.tree,
+            };
+
+            let flags = do opts.flags.iter().fold(0u32) |flags, &f| {
+                flags | (f as u32)
+            };
+
+            let pathspec = do opts.pathspec.map |path| {
+                do path.as_c_str |c_path| { c_path }
+            };
+
+            let c_pathspec = ext::git_strarray {
+                strings: std::vec::raw::to_ptr(pathspec),
+                count: pathspec.len() as u64,
+            };
+
+            let c_opts = ext::git_diff_options {
+                version: 1,     // GIT_DIFF_OPTIONS_VERSION
+                flags: flags,
+                context_lines: opts.context_lines,
+                interhunk_lines: opts.interhunk_lines,
+                old_prefix: do opts.old_prefix.as_c_str |c_pref| { c_pref },
+                new_prefix: do opts.new_prefix.as_c_str |c_pref| { c_pref },
+                pathspec: c_pathspec,
+                max_size: opts.max_size,
+                notify_cb: git_diff_notify_cb,
+                notify_payload: cast::transmute(&notify_cb),
+            };
+
+            let mut diff_list: *ext::git_diff_list = ptr::null();
+
+            if ext::git_diff_tree_to_tree(&mut diff_list, self.repo, old_t, new_t, &c_opts) == 0 {
+                Ok( ~DiffList { difflist: diff_list } )
+            } else {
+                Err( last_error() )
+            }
+        }
+    }
 }
 
 extern fn git_status_cb(path: *c_char, status_flags: c_uint, payload: *c_void) -> c_int
@@ -619,6 +686,18 @@ extern fn git_branch_foreach_cb(branch_name: *c_char, branch_type: ext::git_bran
         } else {
             1
         }
+    }
+}
+
+extern fn git_diff_notify_cb(diff_so_far: *ext::git_diff_list, delta_to_add: *DiffDelta,
+    matched_pathspec: *c_char, payload: *c_void) -> c_int
+{
+    unsafe {
+        let op_ptr: *&fn(DiffList, DiffDelta, ~str) -> bool = cast::transmute(payload);
+        let op = *op_ptr;
+        let difflist = DiffList { difflist: diff_so_far };
+        let spec_str = from_c_str(matched_pathspec);
+        op(difflist, *delta_to_add, spec_str) as c_int
     }
 }
 

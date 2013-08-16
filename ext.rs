@@ -195,6 +195,7 @@ pub struct git_tree_entry;
 pub struct git_treebuilder;
 pub struct git_index;
 pub struct git_object;
+pub struct git_diff_list;
 pub type git_tree = git_object;
 pub type git_commit = git_object;
 pub type git_blob = git_object;
@@ -219,6 +220,19 @@ pub struct git_signature {
     pub name: *c_char,
     pub email: *c_char,
     pub when: git_time,
+}
+
+pub struct git_diff_options {
+    version: c_uint,
+    flags: u32,
+    context_lines: u16,
+    interhunk_lines: u16,
+    old_prefix: *c_char,
+    new_prefix: *c_char,
+    pathspec: git_strarray,
+    max_size: git_off_t,
+    notify_cb: callback_t,
+    notify_payload: *c_void,
 }
 
 // value type of 'crust' functions is *u8
@@ -363,6 +377,11 @@ pub extern {
     pub fn git_branch_is_head(branch: *git_reference) -> c_int;
     pub fn git_branch_remote_name(remote_name_out: *mut c_char, buffer_size: size_t, 
         repo: *git_repository, canonical_branch_name: *c_char) -> c_int;
+
+    /* from <git2/diff.h> */
+    pub fn git_diff_list_free(diff: *git_diff_list) -> c_void;
+    pub fn git_diff_tree_to_tree(diff: &mut *git_diff_list, repo: *git_repository,
+        old_tree: *git_tree, new_tree: *git_tree, opts: *git_diff_options) -> c_int;
 }
 
 /* from <git2/commit.h> */

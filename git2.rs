@@ -16,6 +16,7 @@ pub mod blob;
 pub mod commit;
 pub mod signature;
 pub mod oid;
+pub mod diff;
 
 condition! {
     git_error: (~str, super::GitError) -> ();
@@ -84,6 +85,28 @@ pub struct TreeEntry {
 
 pub struct TreeBuilder {
     priv bld: *ext::git_treebuilder,
+}
+
+pub enum WalkMode {
+    WalkSkip = 1,
+    WalkPass = 0,
+    WalkStop = -1,
+}
+
+pub enum DiffDelta {
+    GIT_DELTA_UNMODIFIED = 0, // no changes
+    GIT_DELTA_ADDED = 1,      // entry does not exist in old version
+    GIT_DELTA_DELETED = 2,    // entry does not exist in new version
+    GIT_DELTA_MODIFIED = 3,   // entry content changed between old and new
+    GIT_DELTA_RENAMED = 4,    // entry was renamed between old and new
+    GIT_DELTA_COPIED = 5,     // entry was copied from another old entry
+    GIT_DELTA_IGNORED = 6,    // entry is ignored item in workdir
+    GIT_DELTA_UNTRACKED = 7,  // entry is untracked item in workdir
+    GIT_DELTA_TYPECHANGE = 8, // type of entry changed between old and new
+}
+
+pub struct DiffList {
+    priv difflist: *ext::git_diff_list,
 }
 
 impl TreeBuilder {
@@ -188,26 +211,26 @@ impl Status {
 
 /// Valid modes for index and tree entries.
 pub enum FileMode {
-	GIT_FILEMODE_NEW					= 0x0000,   // 0000000
-	GIT_FILEMODE_TREE					= 0x4000,   // 0040000
-	GIT_FILEMODE_BLOB					= 0x81a4,   // 0100644
-	GIT_FILEMODE_BLOB_EXECUTABLE		= 0x81ed,   // 0100755
-	GIT_FILEMODE_LINK					= 0xa000,   // 0120000
-	GIT_FILEMODE_COMMIT					= 0xe000,   // 0160000
+    GIT_FILEMODE_NEW                    = 0x0000,   // 0000000
+    GIT_FILEMODE_TREE                   = 0x4000,   // 0040000
+    GIT_FILEMODE_BLOB                   = 0x81a4,   // 0100644
+    GIT_FILEMODE_BLOB_EXECUTABLE        = 0x81ed,   // 0100755
+    GIT_FILEMODE_LINK                   = 0xa000,   // 0120000
+    GIT_FILEMODE_COMMIT                 = 0xe000,   // 0160000
 }
 
 /// Basic type (loose or packed) of any Git object.
 pub enum OType {
-	GIT_OBJ_ANY = -2,		// Object can be any of the following
-	GIT_OBJ_BAD = -1,		// Object is invalid.
-	GIT_OBJ__EXT1 = 0,		// Reserved for future use.
-	GIT_OBJ_COMMIT = 1,		// A commit object.
-	GIT_OBJ_TREE = 2,		// A tree (directory listing) object.
-	GIT_OBJ_BLOB = 3,		// A file revision object.
-	GIT_OBJ_TAG = 4,		// An annotated tag object.
-	GIT_OBJ__EXT2 = 5,		// Reserved for future use.
-	GIT_OBJ_OFS_DELTA = 6,  // A delta, base is given by an offset.
-	GIT_OBJ_REF_DELTA = 7,  // A delta, base is given by object id.
+    GIT_OBJ_ANY = -2,       // Object can be any of the following
+    GIT_OBJ_BAD = -1,       // Object is invalid.
+    GIT_OBJ__EXT1 = 0,      // Reserved for future use.
+    GIT_OBJ_COMMIT = 1,     // A commit object.
+    GIT_OBJ_TREE = 2,       // A tree (directory listing) object.
+    GIT_OBJ_BLOB = 3,       // A file revision object.
+    GIT_OBJ_TAG = 4,        // An annotated tag object.
+    GIT_OBJ__EXT2 = 5,      // Reserved for future use.
+    GIT_OBJ_OFS_DELTA = 6,  // A delta, base is given by an offset.
+    GIT_OBJ_REF_DELTA = 7,  // A delta, base is given by object id.
 }
 
 

@@ -110,12 +110,6 @@ impl<'self> Tree<'self> {
     }
 }
 
-pub enum WalkMode {
-    WalkSkip = 1,
-    WalkPass = 0,
-    WalkStop = -1,
-}
-
 extern fn pre_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_void) -> c_int
 {
     unsafe {
