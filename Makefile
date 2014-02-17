@@ -1,4 +1,4 @@
-lib: git2.rs repository.rs ext.rs git_index.rs reference.rs
+lib: git2.rs ext.rs git_index.rs reference.rs
 	rustc --lib git2.rs -O -Z debug-info
 
 rgit: lib

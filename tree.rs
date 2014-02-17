@@ -1,10 +1,26 @@
-use std::libc::{size_t, c_void, c_char, c_int};
+use std::libc::c_int;
 use std::{ptr, cast};
 use std::str::raw::from_c_str;
-use super::*;
+use super::{OID, OType, FileMode, GitError};
+use super::{git_error, last_error};
+use super::Repository;
 use ext;
 
-impl<'self> Tree<'self> {
+pub struct Tree<'r> {
+    // TODO: make this field priv
+    tree: *ext::git_tree,
+    priv owner: &'r Repository,
+}
+
+impl<'r> Tree<'r> {
+    pub fn new(tree: *ext::git_tree, owner: &'r Repository) -> Tree<'r>
+    {
+        Tree {
+            tree: tree,
+            owner: owner
+        }
+    }
+
     /// Get the id of a tree.
     pub fn id<'r>(& self) -> &'r OID
     {
@@ -16,16 +32,16 @@ impl<'self> Tree<'self> {
     /// Lookup a tree entry by its filename
     pub fn entry_byname(&self, filename: &str) -> Option<~TreeEntry>
     {
-        do filename.as_c_str |c_filename| {
+        filename.with_c_str(|c_filename| {
             unsafe {
                 let entry_ptr = ext::git_tree_entry_byname(self.tree, c_filename);
                 if entry_ptr == ptr::null() {
                     None
                 } else {
-                    Some( ~TreeEntry{tree_entry: entry_ptr, owned: false} )
+                    Some( ~TreeEntry::new(entry_ptr, false) )
                 }
             }
-        }
+        })
     }
 
     /// Lookup a tree entry by SHA value.
@@ -37,7 +53,7 @@ impl<'self> Tree<'self> {
             if entry_ptr == ptr::null() {
                 None
             } else {
-                Some( ~TreeEntry{tree_entry: entry_ptr, owned: false} )
+                Some( ~TreeEntry::new(entry_ptr, false) )
             }
         }
     }
@@ -46,136 +62,41 @@ impl<'self> Tree<'self> {
     /// given its relative path.
     pub fn entry_bypath(&self, path: &str) -> Option<~TreeEntry>
     {
-        do path.as_c_str |c_path| {
+        path.with_c_str(|c_path| {
             unsafe {
                 let mut entry_ptr:*ext::git_tree_entry = ptr::null();
                 if ext::git_tree_entry_bypath(&mut entry_ptr, self.tree, c_path) == 0 {
-                    Some( ~TreeEntry{tree_entry: entry_ptr, owned: true} )
+                    Some( ~TreeEntry::new(entry_ptr, true) )
                 } else {
                     None
                 }
             }
-        }
-    }
-
-    /// Traverse the entries in a tree and its subtrees in pre order.
-    ///
-    /// Children subtrees will be automatically loaded as required, and the `callback` will be
-    /// called once per entry with the current (relative) root for the entry and
-    /// the entry data itself.
-    ///
-    /// If the callback returns WalkSkip, the passed entry will be skipped on the traversal.
-    /// WalkPass continues the walk, and WalkStop stops the walk.
-    ///
-    /// The function returns false if the loop is stopped by StopWalk
-    pub fn walk_preorder(&self, callback: &fn(&str, &TreeEntry) -> WalkMode) -> bool
-    {
-        unsafe {
-            let fptr: *c_void = cast::transmute(&callback);
-            let result = ext::git_tree_walk(self.tree, ext::GIT_TREEWALK_PRE, pre_walk_cb, fptr);
-            if result == 0 {
-                true
-            } else if result == ext::GIT_EUSER {
-                false
-            } else {
-                raise();
-                false
-            }
-        }
-    }
-
-    /// Traverse the entries in a tree and its subtrees in post order.
-    ///
-    /// Children subtrees will be automatically loaded as required, and the `callback` will be
-    /// called once per entry with the current (relative) root for the entry and
-    /// the entry data itself.
-    ///
-    /// If the callback returns false, the loop stops
-    ///
-    /// The function returns false if the loop is stopped by callback
-    pub fn walk_postorder(&self, callback: &fn(&str, &TreeEntry) -> bool) -> bool
-    {
-        unsafe {
-            let fptr: *c_void = cast::transmute(&callback);
-            let result = ext::git_tree_walk(self.tree, ext::GIT_TREEWALK_POST, post_walk_cb, fptr);
-            if result == 0 {
-                true
-            } else if result == ext::GIT_EUSER {
-                false
-            } else {
-                raise();
-                false
-            }
-        }
-    }
-}
-
-extern fn pre_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_void) -> c_int
-{
-    unsafe {
-        let op_ptr: *&fn(&str, &TreeEntry) -> WalkMode = cast::transmute(payload);
-        let op: &fn(&str, &TreeEntry) -> WalkMode = *op_ptr;
-        let root_str = from_c_str(root);
-        let entry = TreeEntry { tree_entry: entry, owned: false };
-        op(root_str, &entry) as c_int
-    }
-}
-
-extern fn post_walk_cb(root: *c_char, entry: *ext::git_tree_entry, payload: *c_void) -> c_int
-{
-    unsafe {
-        let op_ptr: *&fn(&str, &TreeEntry) -> bool = cast::transmute(payload);
-        let op: &fn(&str, &TreeEntry) -> bool = *op_ptr;
-        let root_str = from_c_str(root);
-        let entry = TreeEntry { tree_entry: entry, owned: false };
-        if op(root_str, &entry) {
-            // continue
-            0
-        } else {
-            // negative value stops the walk
-            -1
-        }
-    }
-}
-
-impl<'self> BaseIter<TreeEntry> for Tree<'self> {
-    /// traverse Tree with internal storage order
-    fn each(&self, blk: &fn(v: &TreeEntry) -> bool) -> bool {
-        unsafe {
-            let size = ext::git_tree_entrycount(self.tree);
-            let mut idx:size_t = 0;
-            while idx < size {
-                let entry_ptr = ext::git_tree_entry_byindex(self.tree, idx);
-                if entry_ptr == ptr::null() {
-                    fail!(~"bad entry pointer")
-                }
-                let entry = TreeEntry { tree_entry: entry_ptr, owned: false };
-                if !blk(&entry) {
-                    return false;
-                }
-                idx += 1;
-            }
-            return true;
-        }
-    }
-
-    fn size_hint(&self) -> Option<uint> {
-        unsafe {
-            Some(ext::git_tree_entrycount(self.tree) as uint)
-        }
+        })
     }
 }
 
 #[unsafe_destructor]
-impl<'self> Drop for Tree<'self> {
-    fn finalize(&self) {
+impl<'r> Drop for Tree<'r> {
+    fn drop(&mut self) {
         unsafe {
             ext::git_tree_free(self.tree);
         }
     }
 }
 
+pub struct TreeEntry {
+    priv tree_entry: *ext::git_tree_entry,
+    priv owned: bool,
+}
+
 impl TreeEntry {
+    fn new(tree_entry: *ext::git_tree_entry, owned: bool) -> TreeEntry {
+        TreeEntry {
+            tree_entry: tree_entry,
+            owned: owned
+        }
+    }
+
     /// Get the filename of a tree entry
     pub fn name(&self) -> ~str
     {
@@ -209,7 +130,7 @@ impl TreeEntry {
 
 #[unsafe_destructor]
 impl Drop for TreeEntry {
-    fn finalize(&self) {
+    fn drop(&mut self) {
         unsafe {
             if self.owned {
                 ext::git_tree_entry_free(self.tree_entry);
@@ -221,10 +142,7 @@ impl Drop for TreeEntry {
 impl Clone for TreeEntry {
     fn clone(&self) -> TreeEntry {
         unsafe {
-            TreeEntry {
-                tree_entry: ext::git_tree_entry_dup(self.tree_entry),
-                owned: self.owned,
-            }
+            TreeEntry::new(ext::git_tree_entry_dup(self.tree_entry), self.owned)
         }
     }
 }
@@ -262,6 +180,12 @@ impl Ord for TreeEntry {
     }
 }
 
+impl TotalEq for TreeEntry {
+    fn equals(&self, other: &TreeEntry) -> bool {
+        tree_entry_cmp(self, other) == 0
+    }
+}
+
 impl TotalOrd for TreeEntry {
     fn cmp(&self, other: &TreeEntry) -> Ordering {
         let comp = tree_entry_cmp(self, other);
@@ -287,12 +211,12 @@ impl TreeBuilder {
     /// Get an entry from the builder from its filename
     pub fn get(&self, filename: &str) -> ~TreeEntry
     {
-        do filename.as_c_str |c_filename| {
+        filename.with_c_str(|c_filename| {
             unsafe {
                 let entry_ptr = ext::git_treebuilder_get(self.bld, c_filename);
-                ~TreeEntry { tree_entry: entry_ptr, owned: false }
+                ~TreeEntry::new(entry_ptr, false)
             }
-        }
+        })
     }
 
     /// Add or update an entry to the builder
@@ -313,40 +237,28 @@ impl TreeBuilder {
     pub fn insert(&self, filename: &str, id: &OID, filemode: FileMode) ->
         Result<~TreeEntry, (~str, GitError)>
     {
-        do filename.as_c_str |c_filename| {
+        filename.with_c_str(|c_filename| {
             unsafe {
                 let mut entry_ptr:*ext::git_tree_entry = ptr::null();
                 if(ext::git_treebuilder_insert(&mut entry_ptr, self.bld, c_filename, id,
                                                 filemode) == 0) {
-                    Ok( ~TreeEntry { tree_entry: entry_ptr, owned: false } )
+                    Ok( ~TreeEntry::new(entry_ptr, false) )
                 } else {
                     Err( last_error() )
                 }
             }
-        }
+        })
     }
 
     /// Remove an entry from the builder by its filename
     /// return true if successful, false if the entry does not exist
     pub fn remove(&self, filename: &str) -> bool
     {
-        do filename.as_c_str |c_filename| {
+        filename.with_c_str(|c_filename| {
             unsafe {
                 ext::git_treebuilder_remove(self.bld, c_filename) == 0
             }
-        }
-    }
-
-    /// Filter the entries in the tree
-    ///
-    /// The `filter` closure will be called for each entry in the tree with a
-    /// ref to the entry;
-    /// if the closure returns false, the entry will be filtered (removed from the builder).
-    pub fn filter(&self, filter: &fn(&TreeEntry) -> bool)
-    {
-        unsafe {
-            ext::git_treebuilder_filter(self.bld, filter_cb, cast::transmute(&filter));
-        }
+        })
     }
 
     /// Write the contents of the tree builder as a tree object
@@ -360,7 +272,7 @@ impl TreeBuilder {
         let mut oid = OID { id: [0, ..20] };
         unsafe {
             if ext::git_treebuilder_write(&mut oid, repo.repo, self.bld) != 0 {
-                raise()
+                git_error::cond.raise(last_error())
             }
         }
         return oid;
@@ -375,23 +287,46 @@ impl TreeBuilder {
     }
 }
 
-extern fn filter_cb(entry: *ext::git_tree_entry, payload: *c_void) -> c_int
-{
-    unsafe {
-        let op_ptr: *&fn(&TreeEntry) -> bool = cast::transmute(payload);
-        let op: &fn(&TreeEntry) -> bool = *op_ptr;
-        let entry = TreeEntry { tree_entry: entry, owned: false };
-        if op(&entry) {
-            0
-        } else {
-            1
+pub struct TreeBuilder {
+    priv bld: *ext::git_treebuilder,
+}
+
+impl TreeBuilder {
+    /// Create a new tree builder.
+    /// The tree builder can be used to create or modify trees in memory and
+    /// write them as tree objects to the database.
+    /// The tree builder will start with no entries and will have to be filled manually.
+    pub fn new() -> TreeBuilder
+    {
+        let mut bld:*ext::git_treebuilder = ptr::null();
+        unsafe {
+            if ext::git_treebuilder_create(&mut bld, ptr::null()) == 0 {
+                TreeBuilder { bld: bld }
+            } else {
+                fail!(~"failed to create treebuilder")
+            }
+        }
+    }
+
+    /// Create a new tree builder.
+    /// The tree builder will be initialized with the entries of the given tree.
+    pub fn from_tree(tree: &Tree) -> TreeBuilder
+    {
+        let mut bld:*ext::git_treebuilder = ptr::null();
+        unsafe {
+            if ext::git_treebuilder_create(&mut bld, tree.tree) == 0 {
+                TreeBuilder { bld: bld }
+            } else {
+                fail!(~"failed to create treebuilder")
+            }
         }
     }
 }
 
+
 #[unsafe_destructor]
 impl Drop for TreeBuilder {
-    fn finalize(&self) {
+    fn drop(&mut self) {
         unsafe {
             ext::git_treebuilder_free(self.bld);
         }

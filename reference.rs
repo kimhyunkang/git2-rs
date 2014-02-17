@@ -1,7 +1,7 @@
 use std::libc::{c_char, c_int};
-use std::ptr;
-use std::str::raw::from_c_str;
-use super::{Reference, OID, raise};
+use std::{ptr, str, c_str};
+use super::{OID, raise};
+use super::Repository;
 use ext;
 
 /// Delete the branch reference.
@@ -13,7 +13,19 @@ pub fn branch_delete(reference: &Reference) {
     }
 }
 
-impl<'self> Reference<'self> {
+pub struct Reference<'r> {
+    priv c_ref: *ext::git_reference,
+    priv owner: &'r Repository,
+}
+
+impl<'r> Reference<'r> {
+    pub fn new(c_ref: *ext::git_reference, owner: &'r Repository) -> Reference<'r> {
+        Reference {
+            c_ref: c_ref,
+            owner: owner,
+        }
+    }
+
     ///
     /// Return the name of the given local or remote branch.
     ///
@@ -27,7 +39,7 @@ impl<'self> Reference<'self> {
         unsafe {
             let mut ptr_to_name: *c_char = ptr::null();
             if ext::git_branch_name(&mut ptr_to_name, self.c_ref) == 0 {
-                Some(from_c_str(ptr_to_name))
+                Some(str::raw::from_c_str(ptr_to_name))
             } else {
                 None
             }
@@ -49,31 +61,31 @@ impl<'self> Reference<'self> {
     ///
     /// The new branch name will be checked for validity.
     /// See `git_tag_create()` for rules about valid names.
-    pub fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<Reference<'self>>
+    pub fn branch_move(&self, new_branch_name: &str, force: bool) -> Option<Reference<'r>>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         let flag = force as c_int;
         unsafe {
-            do new_branch_name.as_c_str |c_name| {
+            new_branch_name.with_c_str(|c_name| {
                 let res = ext::git_branch_move(&mut ptr, self.c_ref, c_name, flag);
                 match res {
-                    0 => Some( Reference { c_ref: ptr, owner: self.owner } ),
+                    0 => Some( Reference::new(ptr, self.owner) ),
                     ext::GIT_EINVALIDSPEC => None,
                     _ => { raise(); None },
                 }
-            }
+            })
         }
     }
 
     /// Return the reference supporting the remote tracking branch,
     /// returns None when the upstream is not found
-    pub fn upstream(&self) -> Option<Reference<'self>>
+    pub fn upstream(&self) -> Option<Reference<'r>>
     {
         let mut ptr: *ext::git_reference = ptr::null();
         unsafe {
             let res = ext::git_branch_upstream(&mut ptr, self.c_ref);
             match res {
-                0 => Some( Reference { c_ref: ptr, owner: self.owner } ),
+                0 => Some( Reference::new(ptr, self.owner) ),
                 ext::GIT_ENOTFOUND => None,
                 _ => { raise(); None },
             }
@@ -85,18 +97,20 @@ impl<'self> Reference<'self> {
     ///     upstream. Pass None to unset.
     pub fn set_upstream(&self, upstream_name: Option<&str>)
     {
-        let c_name =
-        match upstream_name {
-            None => ptr::null(),
-            Some(nameref) => nameref.as_c_str(|ptr| {ptr}),
-        };
-
         unsafe {
-            if ext::git_branch_set_upstream(self.c_ref, c_name) == 0 {
-                ()
-            } else {
-                raise()
-            }
+            let c_name =
+            match upstream_name {
+                None => c_str::CString::new(ptr::null(), false),
+                Some(nameref) => nameref.to_c_str(),
+            };
+
+            c_name.with_ref(|name_ptr| {
+                if ext::git_branch_set_upstream(self.c_ref, name_ptr) == 0 {
+                    ()
+                } else {
+                    raise()
+                }
+            })
         }
     }
 
@@ -121,8 +135,8 @@ impl<'self> Reference<'self> {
 }
 
 #[unsafe_destructor]
-impl<'self> Drop for Reference<'self> {
-    fn finalize(&self) {
+impl<'r> Drop for Reference<'r> {
+    fn drop(&mut self) {
         unsafe {
             ext::git_reference_free(self.c_ref);
         }

@@ -1,54 +1,35 @@
-use std::libc::c_char;
-use std::{from_str, to_str};
-use std::{vec, cast};
-use super::{OID, raise};
+use std::{to_str, str};
+use super::OID;
 use ext;
 
-fn from_str(s: &str) -> OID {
-    unsafe {
-        let mut oid = OID { id: [0, .. 20] };
-        do s.as_c_str |c_str| {
-            if ext::git_oid_fromstr(&mut oid, c_str) != 0 {
-                raise()
-            }
-        }
-        return oid;
-    }
-}
-
-impl from_str::FromStr for OID {
+impl FromStr for OID {
     fn from_str(s: &str) -> Option<OID> {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
-            do s.as_c_str |c_str| {
+            s.with_c_str(|c_str| {
                 if ext::git_oid_fromstr(&mut oid, c_str) == 0 {
                     Some(oid)
                 } else {
                     None
                 }
-            }
+            })
         }
     }
 }
 
 impl to_str::ToStr for OID {
     fn to_str(&self) -> ~str {
-        let mut v: ~[c_char] = vec::with_capacity(41);
+        let mut buf = [0 as u8, ..40];
         unsafe {
-            do vec::as_mut_buf(v) |vbuf, _len| {
-                ext::git_oid_fmt(vbuf, self)
-            };
-            vec::raw::set_len(&mut v, 40);
-            v.push(0);
-
-            return cast::transmute(v);
+            ext::git_oid_fmt(buf.as_mut_ptr(), self);
         }
+        str::from_utf8(buf).to_owned()
     }
 }
 
 /* from <git2/oid.h> */
 #[inline]
-priv fn git_oid_cmp(a: &OID, b: &OID) -> int {
+fn git_oid_cmp(a: &OID, b: &OID) -> int {
     let mut idx = 0u;
     while idx < 20u {
         if a.id[idx] != b.id[idx] {
@@ -84,6 +65,12 @@ impl Ord for OID {
 
     fn ge(&self, other: &OID) -> bool {
         git_oid_cmp(self, other) >= 0
+    }
+}
+
+impl TotalEq for OID {
+    fn equals(&self, other: &OID) -> bool {
+        git_oid_cmp(self, other) == 0
     }
 }
 

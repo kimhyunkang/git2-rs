@@ -13,14 +13,14 @@ fn main_usage(program: &str) {
 fn main() {
     let args = os::args();
 
-    let program = copy args[0];
+    let program = args[0];
 
     if args.len() < 2 {
         main_usage(program);
         return;
     }
 
-    let cmd = copy args[1];
+    let cmd = args[1];
     let cmd_args = args.slice(2, args.len());
 
     git2::threads_init();
@@ -50,7 +50,7 @@ fn cmd_init(args: &[~str]) {
     if args.len() == 0 {
         os::getcwd().to_str()
     } else {
-        copy args[0]
+        args[0]
     };
 
     git2::repository::init(path, false);
@@ -65,11 +65,11 @@ fn cmd_clone(program: &str, args: &[~str]) {
     if args.len() == 0 {
         clone_usage(program);
     } else {
-        let origin = copy args[0];
+        let origin = args[0];
         let local_path = if args.len() < 2 {
             os::getcwd().to_str()
         } else {
-            copy args[1]
+            args[1]
         };
 
         git2::repository::clone(origin, local_path);
@@ -100,10 +100,10 @@ fn cmd_status(_: &str, _: &[~str]) {
         if (stat.index_new || stat.index_modified || stat.index_deleted || stat.index_renamed
             || stat.index_typechange)
         {
-            staged.push((copy path, copy stat))
+            staged.push((path, stat))
         }
         if stat.wt_new || stat.wt_modified || stat.wt_deleted || stat.wt_typechange {
-            not_staged.push((copy path, copy stat))
+            not_staged.push((path, stat))
         }
     }
 
@@ -159,7 +159,7 @@ fn cmd_add(program: &str, args: &[~str]) {
     if args.len() == 0 {
         add_usage(program);
     } else {
-        let path = copy args[0];
+        let path = args[0];
         let repo = get_current_repo();
         let index = repo.index().unwrap();
         index.add_bypath(path);
@@ -175,7 +175,7 @@ fn cmd_rm(program: &str, args: &[~str]) {
     if args.len() == 0 {
         rm_usage(program);
     } else {
-        let path = copy args[0];
+        let path = args[0];
         let repo = get_current_repo();
         let index = repo.index().unwrap();
         index.remove_bypath(path);

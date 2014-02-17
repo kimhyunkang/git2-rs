@@ -2,8 +2,8 @@ use std::libc::{c_char, c_void, c_int, c_uint, size_t};
 
 /* from <git2/errors.h> */
 pub struct git_error {
-    pub message: *c_char,
-    pub klass: super::GitError,
+    message: *c_char,
+    klass: super::GitError,
 }
 
 /* from <git2/errors.h> */
@@ -217,9 +217,9 @@ pub struct git_time {
 }
 
 pub struct git_signature {
-    pub name: *c_char,
-    pub email: *c_char,
-    pub when: git_time,
+    name: *c_char,
+    email: *c_char,
+    when: git_time,
 }
 
 pub struct git_diff_options {
@@ -238,8 +238,8 @@ pub struct git_diff_options {
 // value type of 'crust' functions is *u8
 pub type callback_t = *u8;
 
-#[link_args = "-lgit2"]
-pub extern {
+#[link(name = "git2")]
+extern {
     /* from <git2/errors.h> */
     pub fn giterr_last() -> *git_error;
 
@@ -299,7 +299,7 @@ pub extern {
 
     /* from <git2/oid.h> */
     pub fn git_oid_fromstr(out: &mut super::OID, c_str: *c_char) -> c_int;
-    pub fn git_oid_fmt(out: *mut c_char, oid: &super::OID) -> c_int;
+    pub fn git_oid_fmt(out: *mut u8, oid: &super::OID) -> c_int;
 
     /* from <git2/commit.h> */
     pub fn git_commit_message_encoding(commit: *git_commit) -> *c_char;
@@ -315,7 +315,7 @@ pub extern {
     pub fn git_commit_create(id: &mut super::OID, repo: *git_repository,
         update_ref: *c_char, author: &git_signature, committer: &git_signature,
         message_encoding: *c_char, message: *c_char, tree: *git_tree,
-        parent_count: c_int, parents: *const *git_commit) -> c_int;
+        parent_count: c_int, parents: **git_commit) -> c_int;
 
     /* from <git2/tree.h> */
     pub fn git_tree_id(tree: *git_tree) -> *super::OID;

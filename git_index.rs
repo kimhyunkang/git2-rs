@@ -1,7 +1,24 @@
-use super::*;
 use ext;
+use std::ptr;
+use super::{GitError, OID};
+use super::{git_error, last_error};
+use super::Repository;
+use super::tree::Tree;
 
-impl<'self> GitIndex<'self> {
+pub struct GitIndex<'r> {
+    priv index: *ext::git_index,
+    priv owner: &'r Repository,
+}
+
+impl<'r> GitIndex<'r> {
+    pub fn new(index: *ext::git_index, owner: &'r Repository) -> GitIndex<'r>
+    {
+        GitIndex {
+            index: index,
+            owner: owner
+        }
+    }
+
     /// Add or update an index entry from a file on disk
     ///
     /// The file `path` must be relative to the repository's
@@ -19,13 +36,13 @@ impl<'self> GitIndex<'self> {
     ///
     /// raises git_error on error
     pub fn add_bypath(&self, path: &str) {
-        unsafe {
-            do path.as_c_str |c_path| {
+        path.with_c_str(|c_path| {
+            unsafe {
                 if ext::git_index_add_bypath(self.index, c_path) != 0 {
-                    raise()
+                    git_error::cond.raise(last_error())
                 }
             }
-        }
+        })
     }
 
     /// Remove an index entry corresponding to a file on disk
@@ -38,13 +55,13 @@ impl<'self> GitIndex<'self> {
     ///
     /// raises git_error on error
     pub fn remove_bypath(&self, path: &str) {
-        unsafe {
-            do path.as_c_str |c_path| {
+        path.with_c_str(|c_path| {
+            unsafe {
                 if ext::git_index_remove_bypath(self.index, c_path) != 0 {
-                    raise();
+                    git_error::cond.raise(last_error())
                 }
             }
-        }
+        })
     }
 
     /// Read a tree into the index file with stats
@@ -54,7 +71,7 @@ impl<'self> GitIndex<'self> {
     pub fn read_tree(&self, tree: &Tree) {
         unsafe {
             if ext::git_index_read_tree(self.index, tree.tree) != 0 {
-                raise()
+                git_error::cond.raise(last_error())
             }
         }
     }
@@ -66,7 +83,7 @@ impl<'self> GitIndex<'self> {
     {
         unsafe {
             if ext::git_index_write(self.index) != 0 {
-                raise()
+                git_error::cond.raise(last_error())
             }
         }
     }
@@ -86,9 +103,9 @@ impl<'self> GitIndex<'self> {
         unsafe {
             let mut oid = OID { id: [0, .. 20] };
             if ext::git_index_write_tree(&mut oid, self.index) == 0 {
-                let mut ptr_to_tree: *ext::git_tree = std::ptr::null();
+                let mut ptr_to_tree: *ext::git_tree = ptr::null();
                 if ext::git_tree_lookup(&mut ptr_to_tree, self.owner.repo, &oid) == 0 {
-                    Ok( ~Tree { tree: ptr_to_tree, owner: self.owner } )
+                    Ok( ~Tree::new(ptr_to_tree, self.owner) )
                 } else {
                     Err( last_error() )
                 }
@@ -109,8 +126,8 @@ impl<'self> GitIndex<'self> {
 }
 
 #[unsafe_destructor]
-impl<'self> Drop for GitIndex<'self> {
-    fn finalize(&self) {
+impl<'r> Drop for GitIndex<'r> {
+    fn drop(&mut self) {
         unsafe {
             ext::git_index_free(self.index);
         }

@@ -1,11 +1,29 @@
 use std::libc::c_uint;
 use std::ptr;
 use std::str::raw::from_c_str;
+use std::iter;
+use std::vec;
 use ext;
 use signature;
-use super::*;
+use super::{OID, Signature};
+use super::Repository;
+use super::tree::Tree;
+use super::raise;
 
-impl<'self> Commit<'self> {
+pub struct Commit<'r> {
+    // TODO: make this field priv
+    commit: *ext::git_commit,
+    priv owner: &'r Repository,
+}
+
+impl<'r> Commit<'r> {
+    pub fn new(commit: *ext::git_commit, owner: &'r Repository) -> Commit<'r> {
+        Commit {
+            commit: commit,
+            owner: owner,
+        }
+    }
+
     /// get the id of the commit
     pub fn id<'r>(&self) -> &'r OID
     {
@@ -64,7 +82,7 @@ impl<'self> Commit<'self> {
         unsafe {
             let mut tree:*ext::git_tree = ptr::null();
             if ext::git_commit_tree(&mut tree, self.commit) == 0 {
-                ~Tree { tree: tree, owner: self.owner }
+                ~Tree::new(tree, self.owner)
             } else {
                 fail!(~"failed to retrieve tree")
             }
@@ -76,18 +94,17 @@ impl<'self> Commit<'self> {
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
-            let mut parents:~[~Commit] = std::vec::with_capacity(len);
+            let mut parents:~[~Commit] = vec::with_capacity(len);
             let mut success = true;
-            do std::uint::iterate(0, len) |i| {
+            for i in iter::range(0, len) {
                 let mut commit_ptr:*ext::git_commit = ptr::null();
                 if ext::git_commit_parent(&mut commit_ptr, self.commit, i as c_uint) == 0 {
-                    let commit = ~Commit { commit: commit_ptr, owner: self.owner };
+                    let commit = ~Commit::new(commit_ptr, self.owner);
                     parents.push(commit);
                 } else {
                     raise();
                     success = false;
-                };
-                success
+                }
             };
 
             if success {
@@ -109,7 +126,7 @@ impl<'self> Commit<'self> {
         unsafe {
             let res = ext::git_commit_parent(&mut ancestor, self.commit, n as c_uint);
             match res {
-                0 => Some( ~Commit { commit: ancestor, owner: self.owner } ),
+                0 => Some( ~Commit::new(ancestor, self.owner) ),
                 ext::GIT_ENOTFOUND => None,
                 _ => {
                     raise();
@@ -125,9 +142,9 @@ impl<'self> Commit<'self> {
     {
         unsafe {
             let len = ext::git_commit_parentcount(self.commit) as uint;
-            let mut parents:~[~OID] = std::vec::with_capacity(len);
+            let mut parents:~[~OID] = vec::with_capacity(len);
             let mut success = true;
-            do std::uint::iterate(0, len) |i| {
+            for i in iter::range(0, len) {
                 let mut oid = OID { id: [0, .. 20] };
                 let res_ptr = ext::git_commit_parent_id(self.commit, i as c_uint);
                 if res_ptr == ptr::null() {
@@ -137,8 +154,7 @@ impl<'self> Commit<'self> {
                     ptr::copy_memory(&mut oid, res_ptr, 1);
                     parents.push(~oid);
                 }
-                success
-            };
+            }
 
             if success {
                 return parents;
@@ -150,8 +166,8 @@ impl<'self> Commit<'self> {
 }
 
 #[unsafe_destructor]
-impl<'self> Drop for Commit<'self> {
-    fn finalize(&self) {
+impl<'r> Drop for Commit<'r> {
+    fn drop(&mut self) {
         unsafe {
             ext::git_commit_free(self.commit);
         }

@@ -4,8 +4,8 @@ use ext;
 use super::{Signature, Time};
 
 pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
-    do sig.name.as_c_str |c_name| {
-        do sig.email.as_c_str |c_email| {
+    sig.name.with_c_str(|c_name| {
+        sig.email.with_c_str(|c_email| {
             ext::git_signature {
                 name: c_name,
                 email: c_email,
@@ -14,8 +14,8 @@ pub fn to_c_sig(sig: &Signature) -> ext::git_signature {
                     offset: sig.when.offset as c_int,
                 }
             }
-        }
-    }
+        })
+    })
 }
 
 pub unsafe fn from_c_sig(c_sig: *ext::git_signature) -> Signature {
@@ -58,6 +58,12 @@ impl Ord for Time {
 
     fn ge(&self, other: &Time) -> bool {
         time_cmp(self, other) >= 0
+    }
+}
+
+impl TotalEq for Time {
+    fn equals(&self, other: &Time) -> bool {
+        time_cmp(self, other) == 0
     }
 }
 

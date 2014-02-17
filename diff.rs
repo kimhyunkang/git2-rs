@@ -1,5 +1,5 @@
-use super::*;
 use ext;
+use super::{OID, DiffList};
 
 pub enum DiffFlag {
     /** Reverse the sides of the diff */
@@ -113,7 +113,7 @@ pub struct DiffFile {
 
 #[unsafe_destructor]
 impl Drop for DiffList {
-    fn finalize(&self) {
+    fn drop(&mut self) {
         unsafe {
             ext::git_diff_list_free(self.difflist);
         }

@@ -1,9 +1,24 @@
-use super::{Blob, OID};
+use super::OID;
 use std::cast;
 use std::vec::raw::buf_as_slice;
+use super::Repository;
 use ext;
 
-impl<'self> Blob<'self> {
+pub struct Blob<'r> {
+    priv blob: *ext::git_blob,
+    priv owner: &'r Repository,
+}
+
+impl<'r> Blob<'r> {
+    // TODO: make this function priv
+    pub fn new(blob: *ext::git_blob, owner: &'r Repository) -> Blob<'r>
+    {
+        Blob {
+            blob: blob,
+            owner: owner
+        }
+    }
+
     /// get the id of the blob
     pub fn id<'r>(&self) -> &'r OID
     {
@@ -18,7 +33,7 @@ impl<'self> Blob<'self> {
     /// Get a read-only buffer with the raw content of a blob.
     ///
     /// A reference to the raw content of a blob is transferred to closure
-    pub fn rawcontent_as_slice<T>(&self, f: &fn(v: &[u8]) -> T) -> T
+    pub fn rawcontent_as_slice<T>(&self, f: |v: &[u8]| -> T) -> T
     {
         unsafe {
             let ptr:*u8 = cast::transmute(ext::git_blob_rawcontent(self.blob));
@@ -38,14 +53,14 @@ impl<'self> Blob<'self> {
     pub fn is_binary(&self) -> bool
     {
         unsafe {
-            ext::git_blob_is_binary(self.blob) as bool
+            ext::git_blob_is_binary(self.blob) != 0
         }
     }
 }
 
 #[unsafe_destructor]
-impl<'self> Drop for Blob<'self> {
-    fn finalize(&self) {
+impl<'r> Drop for Blob<'r> {
+    fn drop(&mut self) {
         unsafe {
             ext::git_blob_free(self.blob);
         }
